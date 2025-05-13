@@ -19,4 +19,7 @@ public class UserController {
     public void register(@RequestBody RegisterRequest request) {
         this.userService.register(request);
     }
+
+    @PostMapping("/login")
+    public void login(@RequestBody )
 }
