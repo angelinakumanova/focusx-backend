@@ -1,6 +1,7 @@
 package app.focusx.web;
 
 import app.focusx.service.UserService;
+import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,5 +22,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public void login(@RequestBody )
+    public String login(@RequestBody LoginRequest request) {
+        return userService.verify(request);
+    }
 }

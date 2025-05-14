@@ -1,11 +1,13 @@
 package app.focusx.service;
 
 import app.focusx.model.User;
+import app.focusx.model.UserRole;
 import app.focusx.repository.UserRepository;
 import app.focusx.security.AuthenticationMetadata;
 import app.focusx.security.JwtService;
 import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -25,30 +28,34 @@ public class UserService implements UserDetailsService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
-    public UserService(UserRepository userRepository, JwtService jwtService, AuthenticationManager authenticationManager) {
+    private final BCryptPasswordEncoder encoder;
+
+    public UserService(UserRepository userRepository, JwtService jwtService, @Lazy AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
+        this.encoder = new BCryptPasswordEncoder(12);
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
+        Optional<User> optionalUser = userRepository.findByUsername(username);
+
+        if (optionalUser.isEmpty()) {
             throw new UsernameNotFoundException("User not found");
         }
+
+        User user = optionalUser.get();
 
         return new AuthenticationMetadata(user.getId(), user.getUsername(), user.getPassword(), user.getRole(), user.isActive());
     }
 
-    public User register(RegisterRequest request) {
-        return this.userRepository.save(createNewUser(request));
+    public void register(RegisterRequest request) {
+        this.userRepository.save(createNewUser(request));
     }
 
     public String verify(LoginRequest request) {
-        Authentication authentication = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+       authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
        return jwtService.generateToken(request.getUsername());
     }
@@ -59,6 +66,8 @@ public class UserService implements UserDetailsService {
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(encoder.encode(request.getPassword()))
+                .isActive(true)
+                .role(UserRole.USER)
                 .build();
     }
 }
