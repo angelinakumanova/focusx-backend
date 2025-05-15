@@ -8,6 +8,7 @@ import app.focusx.security.JwtService;
 import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,6 +18,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -54,10 +56,22 @@ public class UserService implements UserDetailsService {
         this.userRepository.save(createNewUser(request));
     }
 
-    public String verify(LoginRequest request) {
-       authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+    public ResponseCookie verify(LoginRequest request) {
+       Authentication auth = authenticationManager
+               .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-       return jwtService.generateToken(request.getUsername());
+       AuthenticationMetadata authenticationMetadata = (AuthenticationMetadata) auth.getPrincipal();
+       String username = authenticationMetadata.getUsername();
+       String jwt = jwtService.generateToken(username);
+
+       // TODO: Set secure to "true" in production
+       return ResponseCookie.from("jwt", jwt)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(Duration.ofDays(7))
+                .sameSite("Strict")
+                .build();
     }
 
     private User createNewUser(RegisterRequest request) {
