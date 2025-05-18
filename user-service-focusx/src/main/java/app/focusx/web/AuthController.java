@@ -1,0 +1,128 @@
+package app.focusx.web;
+
+import app.focusx.security.JwtService;
+import app.focusx.service.UserService;
+import app.focusx.web.dto.LoginRequest;
+import app.focusx.web.dto.RegisterRequest;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    private final UserService userService;
+    private final JwtService jwtService;
+
+    public AuthController(UserService userService, JwtService jwtService) {
+        this.userService = userService;
+        this.jwtService = jwtService;
+    }
+
+    @PostMapping("/register")
+    public void register(@RequestBody RegisterRequest request) {
+        this.userService.register(request);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        String username = userService.verify(request);
+
+        String accessToken = jwtService.generateAccessToken(username);
+        String refreshToken = jwtService.generateRefreshToken(username);
+
+        // TODO: Set secure to "true" in production
+        ResponseCookie accessCookie = ResponseCookie.from("access_token", accessToken)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(Duration.ofMinutes(15))
+                .sameSite("Strict")
+                .build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
+                .httpOnly(true)
+                .path("/api/auth/refresh")
+                .maxAge(Duration.ofDays(7))
+                .sameSite("Strict")
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .build();
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+
+        if (cookies == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String refreshToken = Arrays.stream(cookies)
+                .filter(c -> "refresh_token".equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
+
+        if (refreshToken == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String username = jwtService.extractUsername(refreshToken);
+
+        if (username == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String newAccessToken = jwtService.generateAccessToken(username);
+
+        ResponseCookie accessCookie = ResponseCookie.from("access_token", newAccessToken)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(Duration.ofMinutes(15))
+                .sameSite("Strict")
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> me(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+
+        if (cookies == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String accessToken = Arrays.stream(cookies)
+                .filter(c -> "access_token".equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
+
+        if (accessToken == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String username = jwtService.extractUsername(accessToken);
+
+        if (username == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.ok()
+                .body(Map.of("username", username));
+    }
+}

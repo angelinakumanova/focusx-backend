@@ -2,8 +2,10 @@ package app.focusx.config;
 
 import app.focusx.security.JwtFilter;
 import app.focusx.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -26,7 +28,7 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
 
-    public SecurityConfig(UserService userService, JwtFilter jwtFilter) {
+    public SecurityConfig(@Lazy UserService userService, JwtFilter jwtFilter) {
         this.userService = userService;
         this.jwtFilter = jwtFilter;
     }
@@ -37,9 +39,12 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/login", "/register").permitAll()
-                        .anyRequest().authenticated()).
-                sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/me").permitAll()
+                        .anyRequest().authenticated())
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint((req, res, ex) ->
+                        res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

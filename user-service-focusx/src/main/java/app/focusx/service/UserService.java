@@ -7,6 +7,8 @@ import app.focusx.security.AuthenticationMetadata;
 import app.focusx.security.JwtService;
 import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
+import app.focusx.web.dto.UserResponse;
+import app.focusx.web.mapper.DtoMapper;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,14 +29,12 @@ public class UserService implements UserDetailsService {
 
 
     private final UserRepository userRepository;
-    private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
     private final BCryptPasswordEncoder encoder;
 
-    public UserService(UserRepository userRepository, JwtService jwtService, @Lazy AuthenticationManager authenticationManager) {
+    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
-        this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.encoder = new BCryptPasswordEncoder(12);
     }
@@ -56,22 +56,12 @@ public class UserService implements UserDetailsService {
         this.userRepository.save(createNewUser(request));
     }
 
-    public ResponseCookie verify(LoginRequest request) {
-       Authentication auth = authenticationManager
-               .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+    public String verify(LoginRequest request) {
+        Authentication auth = authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-       AuthenticationMetadata authenticationMetadata = (AuthenticationMetadata) auth.getPrincipal();
-       String username = authenticationMetadata.getUsername();
-       String jwt = jwtService.generateToken(username);
-
-       // TODO: Set secure to "true" in production
-       return ResponseCookie.from("jwt", jwt)
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(Duration.ofDays(7))
-                .sameSite("Strict")
-                .build();
+        AuthenticationMetadata authenticationMetadata = (AuthenticationMetadata) auth.getPrincipal();
+        return authenticationMetadata.getUsername();
     }
 
     private User createNewUser(RegisterRequest request) {

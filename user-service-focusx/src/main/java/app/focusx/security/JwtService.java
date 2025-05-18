@@ -22,11 +22,20 @@ public class JwtService {
         this.publicKey = publicKey;
     }
 
-    public String generateToken(String username) {
+    public String generateAccessToken(String username) {
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date())
-                .expiration(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
+                .expiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
+                .signWith(privateKey)
+                .compact();
+    }
+
+    public String generateRefreshToken(String username) {
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
                 .signWith(privateKey)
                 .compact();
     }
@@ -49,8 +58,8 @@ public class JwtService {
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
-        final String userName = extractUsername(token);
-        return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
     private boolean isTokenExpired(String token) {
