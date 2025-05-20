@@ -11,6 +11,7 @@ import app.focusx.web.dto.UserResponse;
 import app.focusx.web.mapper.DtoMapper;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,7 +21,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -62,6 +63,27 @@ public class UserService implements UserDetailsService {
 
         AuthenticationMetadata authenticationMetadata = (AuthenticationMetadata) auth.getPrincipal();
         return authenticationMetadata.getUsername();
+    }
+
+    public void updateUsername(String userId, String username) {
+        Optional<User> optionalUser = userRepository.getUserById(userId);
+
+        if (optionalUser.isEmpty()) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        User user = optionalUser.get();
+
+        if (user.getUsername().equals(username)) {
+            throw new IllegalArgumentException("You cannot update the same username.");
+        }
+
+        if (user.getLastModifiedUsername().plusDays(30).isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("You have changed your username in the past 30 days.");
+        }
+
+        user.setUsername(username);
+        userRepository.save(user);
     }
 
     private User createNewUser(RegisterRequest request) {

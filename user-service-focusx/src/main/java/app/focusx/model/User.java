@@ -6,6 +6,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
+
 @Document
 @Data
 @Builder
@@ -21,6 +23,8 @@ public class User {
     private String password;
     private UserRole role;
     private boolean isActive;
+    private LocalDateTime lastModifiedUsername;
+    private LocalDateTime lastModifiedPassword;
 
 
 }

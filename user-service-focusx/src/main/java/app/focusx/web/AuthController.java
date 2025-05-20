@@ -6,7 +6,9 @@ import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -60,69 +62,64 @@ public class AuthController {
                 .build();
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        Cookie accessTokenCookie = new Cookie("access_token", null);
+        accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(0);
+
+        Cookie refreshTokenCookie = new Cookie("refresh_token", null);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setPath("/api/auth/refresh");
+        refreshTokenCookie.setMaxAge(0);
+
+        response.addCookie(accessTokenCookie);
+        response.addCookie(refreshTokenCookie);
+
+        return ResponseEntity.ok("Logged out");
+    }
+
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
+    public ResponseEntity<?> refreshToken(@CookieValue(value = "refresh_token") String refreshToken) {
 
-        if (cookies == null) {
-            return ResponseEntity.status(401).build();
+        if (refreshToken != null) {
+            String username = jwtService.extractUsername(refreshToken);
+
+            if (username != null) {
+
+                String newAccessToken = jwtService.generateAccessToken(username);
+
+                ResponseCookie accessCookie = ResponseCookie.from("access_token", newAccessToken)
+                        .httpOnly(true)
+                        .path("/")
+                        .maxAge(Duration.ofMinutes(15))
+                        .sameSite("Strict")
+                        .build();
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                        .build();
+            }
         }
 
-        String refreshToken = Arrays.stream(cookies)
-                .filter(c -> "refresh_token".equals(c.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
 
-        if (refreshToken == null) {
-            return ResponseEntity.status(401).build();
-        }
-
-        String username = jwtService.extractUsername(refreshToken);
-
-        if (username == null) {
-            return ResponseEntity.status(401).build();
-        }
-
-        String newAccessToken = jwtService.generateAccessToken(username);
-
-        ResponseCookie accessCookie = ResponseCookie.from("access_token", newAccessToken)
-                .httpOnly(true)
-                .path("/")
-                .maxAge(Duration.ofMinutes(15))
-                .sameSite("Strict")
-                .build();
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
-                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
+    public ResponseEntity<?> me(@CookieValue(value = "access_token") String accessToken) {
 
-        if (cookies == null) {
-            return ResponseEntity.status(401).build();
+
+        if (accessToken != null) {
+            String username = jwtService.extractUsername(accessToken);
+
+            if (username != null) {
+                return ResponseEntity.ok()
+                        .body(Map.of("username", username));
+            }
         }
 
-        String accessToken = Arrays.stream(cookies)
-                .filter(c -> "access_token".equals(c.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
-
-        if (accessToken == null) {
-            return ResponseEntity.status(401).build();
-        }
-
-        String username = jwtService.extractUsername(accessToken);
-
-        if (username == null) {
-            return ResponseEntity.status(401).build();
-        }
-
-        return ResponseEntity.ok()
-                .body(Map.of("username", username));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 }
