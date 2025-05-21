@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Map;
 
 @RestController
@@ -51,7 +50,7 @@ public class AuthController {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .path("/api/auth/refresh")
+                .path("/")
                 .maxAge(Duration.ofDays(7))
                 .sameSite("Strict")
                 .build();
@@ -71,7 +70,7 @@ public class AuthController {
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", null);
         refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setPath("/api/auth/refresh");
+        refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(0);
 
         response.addCookie(accessTokenCookie);
@@ -81,7 +80,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@CookieValue(value = "refresh_token") String refreshToken) {
+    public ResponseEntity<?> refreshToken(@CookieValue(value = "refresh_token", required = false) String refreshToken) {
 
         if (refreshToken != null) {
             String username = jwtService.extractUsername(refreshToken);
