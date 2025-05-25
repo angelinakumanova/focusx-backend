@@ -73,8 +73,14 @@ public class UserService implements UserDetailsService {
 
         User user = optionalUser.get();
 
+
         if (user.getUsername().equals(username)) {
-            throw new UsernameUpdateException("You cannot update the same username.");
+            throw new UsernameUpdateException("This is already your username.");
+        }
+
+        Optional<User> existingUser = userRepository.getUserByUsername(username);
+        if (existingUser.isPresent()) {
+            throw new UsernameUpdateException("Username is already taken!");
         }
 
         if (user.getLastModifiedUsername() != null && user.getLastModifiedUsername().plusDays(30).isAfter(LocalDateTime.now())) {
@@ -82,6 +88,7 @@ public class UserService implements UserDetailsService {
         }
 
         user.setUsername(username);
+        user.setLastModifiedUsername(LocalDateTime.now());
         userRepository.save(user);
     }
 
@@ -113,6 +120,8 @@ public class UserService implements UserDetailsService {
                 .password(encoder.encode(request.getPassword()))
                 .isActive(true)
                 .role(UserRole.USER)
+                .lastModifiedUsername(null)
+                .lastModifiedPassword(null)
                 .build();
     }
 

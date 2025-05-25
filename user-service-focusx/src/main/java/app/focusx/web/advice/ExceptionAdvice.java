@@ -1,5 +1,6 @@
 package app.focusx.web.advice;
 
+import app.focusx.exception.UsernameUpdateException;
 import app.focusx.web.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,19 @@ public class ExceptionAdvice {
         ErrorResponse error = ErrorResponse.builder()
                 .status(401)
                 .message("Invalid username or password")
+                .path(request.getRequestURI())
+                .error("Unauthorized")
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    @ExceptionHandler(UsernameUpdateException.class)
+    public ResponseEntity<ErrorResponse> handleUsernameUpdateException(UsernameUpdateException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .status(401)
+                .message(ex.getMessage())
                 .path(request.getRequestURI())
                 .error("Unauthorized")
                 .timestamp(LocalDateTime.now())
