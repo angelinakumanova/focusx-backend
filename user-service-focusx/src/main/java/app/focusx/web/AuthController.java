@@ -4,8 +4,8 @@ import app.focusx.security.JwtService;
 import app.focusx.service.UserService;
 import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
+import app.focusx.web.dto.UserResponse;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -35,10 +34,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        String username = userService.verify(request);
+        String userId = userService.verify(request);
 
-        String accessToken = jwtService.generateAccessToken(username);
-        String refreshToken = jwtService.generateRefreshToken(username);
+        String accessToken = jwtService.generateAccessToken(userId);
+        String refreshToken = jwtService.generateRefreshToken(userId);
 
         // TODO: Set secure to "true" in production
         ResponseCookie accessCookie = ResponseCookie.from("access_token", accessToken)
@@ -83,11 +82,11 @@ public class AuthController {
     public ResponseEntity<?> refreshToken(@CookieValue(value = "refresh_token", required = false) String refreshToken) {
 
         if (refreshToken != null) {
-            String username = jwtService.extractUsername(refreshToken);
+            String userId = jwtService.extractUserId(refreshToken);
 
-            if (username != null) {
+            if (userId != null) {
 
-                String newAccessToken = jwtService.generateAccessToken(username);
+                String newAccessToken = jwtService.generateAccessToken(userId);
 
                 ResponseCookie accessCookie = ResponseCookie.from("access_token", newAccessToken)
                         .httpOnly(true)
@@ -111,11 +110,12 @@ public class AuthController {
 
 
         if (accessToken != null) {
-            String username = jwtService.extractUsername(accessToken);
+            String userId = jwtService.extractUserId(accessToken);
 
-            if (username != null) {
+            if (userId != null) {
+                UserResponse userResponse = userService.getInfo(userId);
                 return ResponseEntity.ok()
-                        .body(Map.of("username", username));
+                        .body(userResponse);
             }
         }
 

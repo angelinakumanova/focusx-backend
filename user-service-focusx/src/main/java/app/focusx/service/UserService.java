@@ -1,5 +1,6 @@
 package app.focusx.service;
 
+import app.focusx.exception.UsernameUpdateException;
 import app.focusx.model.User;
 import app.focusx.model.UserRole;
 import app.focusx.repository.UserRepository;
@@ -9,9 +10,6 @@ import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
 import app.focusx.web.dto.UserResponse;
 import app.focusx.web.mapper.DtoMapper;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.http.ResponseCookie;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -62,28 +60,49 @@ public class UserService implements UserDetailsService {
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
         AuthenticationMetadata authenticationMetadata = (AuthenticationMetadata) auth.getPrincipal();
-        return authenticationMetadata.getUsername();
+
+        return authenticationMetadata.getUserId();
     }
 
     public void updateUsername(String userId, String username) {
         Optional<User> optionalUser = userRepository.getUserById(userId);
 
         if (optionalUser.isEmpty()) {
-            throw new IllegalArgumentException("User not found");
+            throw new UsernameUpdateException("User not found");
         }
 
         User user = optionalUser.get();
 
         if (user.getUsername().equals(username)) {
-            throw new IllegalArgumentException("You cannot update the same username.");
+            throw new UsernameUpdateException("You cannot update the same username.");
         }
 
-        if (user.getLastModifiedUsername().plusDays(30).isAfter(LocalDateTime.now())) {
-            throw new IllegalArgumentException("You have changed your username in the past 30 days.");
+        if (user.getLastModifiedUsername() != null && user.getLastModifiedUsername().plusDays(30).isAfter(LocalDateTime.now())) {
+            throw new UsernameUpdateException("You have changed your username in the past 30 days.");
         }
 
         user.setUsername(username);
         userRepository.save(user);
+    }
+
+    public UserResponse getInfo(String userId) {
+        Optional<User> optionalUser = userRepository.getUserById(userId);
+
+        if (optionalUser.isEmpty()) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        return DtoMapper.mapUserToUserResponse(optionalUser.get());
+    }
+
+    public User getById(String userId) {
+        Optional<User> optionalUser = userRepository.getUserById(userId);
+
+        if (optionalUser.isEmpty()) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        return optionalUser.get();
     }
 
     private User createNewUser(RegisterRequest request) {
@@ -96,4 +115,6 @@ public class UserService implements UserDetailsService {
                 .role(UserRole.USER)
                 .build();
     }
+
+
 }

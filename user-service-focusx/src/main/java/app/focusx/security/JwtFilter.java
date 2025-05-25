@@ -1,5 +1,6 @@
 package app.focusx.security;
 
+import app.focusx.model.User;
 import app.focusx.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -31,48 +32,47 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
-
         Cookie[] cookies = request.getCookies();
         String jwt = null;
-        String username;
+        String userId;
 
-            if (cookies != null) {
-                jwt = Arrays.stream(cookies)
-                        .filter(c -> "access_token".equals(c.getName()))
-                        .map(Cookie::getValue)
-                        .findFirst()
-                        .orElse(null);
+        if (cookies != null) {
+            jwt = Arrays.stream(cookies)
+                    .filter(c -> "access_token".equals(c.getName()))
+                    .map(Cookie::getValue)
+                    .findFirst()
+                    .orElse(null);
 
+        }
+
+        if (jwt != null) {
+
+            try {
+                userId = jwtService.extractUserId(jwt);
+            } catch (Exception e) {
+
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
             }
 
-            if (jwt != null) {
+            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                User user = userService.getById(userId);
+                AuthenticationMetadata authenticationMetadata = (AuthenticationMetadata) userService.loadUserByUsername(user.getUsername());
 
-                try {
-                    username = jwtService.extractUsername(jwt);
-                } catch (Exception e) {
+                if (jwtService.validateToken(jwt, authenticationMetadata)) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(authenticationMetadata, null, authenticationMetadata.getAuthorities());
 
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     return;
                 }
-
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UserDetails userDetails = userService.loadUserByUsername(username);
-
-                    if (jwtService.validateToken(jwt, userDetails)) {
-                        UsernamePasswordAuthenticationToken authToken =
-                                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-
-                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
-                    } else {
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        return;
-                    }
-                }
             }
+        }
 
-            filterChain.doFilter(request, response);
+        filterChain.doFilter(request, response);
 
 
     }
