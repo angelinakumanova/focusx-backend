@@ -9,12 +9,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 public class AuthenticationMetadata implements UserDetails {
 
-    private String userId;
+    private UUID userId;
     private String username;
     private String password;
     private UserRole role;

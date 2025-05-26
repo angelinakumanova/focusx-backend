@@ -9,6 +9,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -22,18 +23,18 @@ public class JwtService {
         this.publicKey = publicKey;
     }
 
-    public String generateAccessToken(String userId) {
+    public String generateAccessToken(UUID userId) {
         return Jwts.builder()
-                .subject(userId)
+                .subject(userId.toString())
                 .issuedAt(new Date())
                 .expiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
                 .signWith(privateKey)
                 .compact();
     }
 
-    public String generateRefreshToken(String userId) {
+    public String generateRefreshToken(UUID userId) {
         return Jwts.builder()
-                .subject(userId)
+                .subject(userId.toString())
                 .issuedAt(new Date())
                 .expiration(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
                 .signWith(privateKey)
@@ -59,7 +60,7 @@ public class JwtService {
 
     public boolean validateToken(String token, AuthenticationMetadata authenticationMetadata) {
         final String userId = extractUserId(token);
-        return (userId.equals(authenticationMetadata.getUserId()) && !isTokenExpired(token));
+        return (userId.equals(authenticationMetadata.getUserId().toString()) && !isTokenExpired(token));
     }
 
     private boolean isTokenExpired(String token) {

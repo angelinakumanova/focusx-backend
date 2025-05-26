@@ -7,6 +7,7 @@ import app.focusx.web.dto.RegisterRequest;
 import app.focusx.web.dto.UserResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,13 +30,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public void register(@RequestBody RegisterRequest request) {
+    public void register(@Valid @RequestBody RegisterRequest request) {
         this.userService.register(request);
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        String userId = userService.verify(request);
+        UUID userId = userService.verify(request);
 
         String accessToken = jwtService.generateAccessToken(userId);
         String refreshToken = jwtService.generateRefreshToken(userId);
@@ -86,7 +88,7 @@ public class AuthController {
 
             if (userId != null) {
 
-                String newAccessToken = jwtService.generateAccessToken(userId);
+                String newAccessToken = jwtService.generateAccessToken(UUID.fromString(userId));
 
                 ResponseCookie accessCookie = ResponseCookie.from("access_token", newAccessToken)
                         .httpOnly(true)
@@ -113,7 +115,7 @@ public class AuthController {
             String userId = jwtService.extractUserId(accessToken);
 
             if (userId != null) {
-                UserResponse userResponse = userService.getInfo(userId);
+                UserResponse userResponse = userService.getInfo(UUID.fromString(userId));
                 return ResponseEntity.ok()
                         .body(userResponse);
             }
