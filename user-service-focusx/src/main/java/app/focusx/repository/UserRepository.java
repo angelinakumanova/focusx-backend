@@ -15,5 +15,5 @@ public interface UserRepository extends MongoRepository<User, UUID> {
 
     Optional<User> getUserByUsername(String username);
 
-    boolean existsByUsername(String username);
+    boolean existsByUsernameIgnoreCase(String username);
 }
