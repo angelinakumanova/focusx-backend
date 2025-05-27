@@ -1,7 +1,10 @@
 package app.focusx.web;
 
 import app.focusx.service.UserService;
+import app.focusx.util.CookieUtils;
 import app.focusx.web.dto.PasswordUpdateRequest;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,16 +22,23 @@ public class UserController {
 
     @PutMapping("/{id}/{username}")
     public ResponseEntity<?> updateUsername(@PathVariable String id, @PathVariable String username) {
-        UUID userId = UUID.fromString(id);
-        userService.updateUsername(userId, username);
+        userService.updateUsername(id, username);
 
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/password")
     public ResponseEntity<?> updatePassword(@PathVariable String id, @RequestBody PasswordUpdateRequest request) {
-        UUID userId = UUID.fromString(id);
-        userService.updatePassword(userId, request.getCurrentPassword(), request.getNewPassword());
+        userService.updatePassword(id, request.getCurrentPassword(), request.getNewPassword());
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/deactivate")
+    public ResponseEntity<?> deleteAccount(@PathVariable String id, HttpServletResponse response) {
+        userService.deactivate(id);
+
+        CookieUtils.clearAuthCookies(response);
 
         return ResponseEntity.ok().build();
     }

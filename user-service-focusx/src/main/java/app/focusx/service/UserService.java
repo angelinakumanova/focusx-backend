@@ -40,7 +40,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<User> optionalUser = userRepository.findByUsername(username);
+        Optional<User> optionalUser = userRepository.findByUsernameAndIsActive(username, true);
 
         if (optionalUser.isEmpty()) {
             throw new UsernameNotFoundException("User not found");
@@ -64,8 +64,8 @@ public class UserService implements UserDetailsService {
         return authenticationMetadata.getUserId();
     }
 
-    public void updateUsername(UUID userId, String username) {
-        User user = findById(userId);
+    public void updateUsername(String userId, String username) {
+        User user = findById(UUID.fromString(userId));
 
 
         if (user.getUsername().equals(username)) {
@@ -86,8 +86,8 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
     }
 
-    public void updatePassword(UUID userId, String currentPassword, String newPassword) {
-        User user = findById(userId);
+    public void updatePassword(String userId, String currentPassword, String newPassword) {
+        User user = findById(UUID.fromString(userId));
 
         if (!encoder.matches(currentPassword, user.getPassword())) {
             throw new PasswordUpdateException("Incorrect current password. Please try again.");
@@ -103,6 +103,18 @@ public class UserService implements UserDetailsService {
 
         user.setPassword(encoder.encode(newPassword));
         user.setLastModifiedPassword(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    public void deactivate(String userId) {
+        User user = findById(UUID.fromString(userId));
+
+        if (!user.isActive()) {
+            throw new IllegalArgumentException("User is already deactivated.");
+        }
+
+        user.setActive(false);
+        user.setDeletedAt(LocalDateTime.now());
         userRepository.save(user);
     }
 
@@ -154,6 +166,7 @@ public class UserService implements UserDetailsService {
                 .role(UserRole.USER)
                 .lastModifiedUsername(null)
                 .lastModifiedPassword(null)
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 }

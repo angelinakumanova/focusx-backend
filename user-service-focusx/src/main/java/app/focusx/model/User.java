@@ -25,6 +25,8 @@ public class User {
     private boolean isActive;
     private LocalDateTime lastModifiedUsername;
     private LocalDateTime lastModifiedPassword;
+    private LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
 
 
 }

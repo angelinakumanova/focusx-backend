@@ -2,10 +2,10 @@ package app.focusx.web;
 
 import app.focusx.security.JwtService;
 import app.focusx.service.UserService;
+import app.focusx.util.CookieUtils;
 import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
 import app.focusx.web.dto.UserResponse;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -41,41 +41,20 @@ public class AuthController {
         String accessToken = jwtService.generateAccessToken(userId);
         String refreshToken = jwtService.generateRefreshToken(userId);
 
-        // TODO: Set secure to "true" in production
-        ResponseCookie accessCookie = ResponseCookie.from("access_token", accessToken)
-                .httpOnly(true)
-                .path("/")
-                .maxAge(Duration.ofMinutes(15))
-                .sameSite("Strict")
-                .build();
 
-        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
-                .httpOnly(true)
-                .path("/")
-                .maxAge(Duration.ofDays(7))
-                .sameSite("Strict")
-                .build();
+        ResponseCookie accessTokenCookie = CookieUtils.buildResponseCookie("access_token", accessToken, Duration.ofMinutes(15));
+        ResponseCookie refreshTokenCookie = CookieUtils.buildResponseCookie("refresh_token", refreshToken, Duration.ofDays(7));
+
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
                 .build();
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
-        Cookie accessTokenCookie = new Cookie("access_token", null);
-        accessTokenCookie.setHttpOnly(true);
-        accessTokenCookie.setPath("/");
-        accessTokenCookie.setMaxAge(0);
-
-        Cookie refreshTokenCookie = new Cookie("refresh_token", null);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(0);
-
-        response.addCookie(accessTokenCookie);
-        response.addCookie(refreshTokenCookie);
+        CookieUtils.clearAuthCookies(response);
 
         return ResponseEntity.ok("Logged out");
     }
@@ -90,12 +69,7 @@ public class AuthController {
 
                 String newAccessToken = jwtService.generateAccessToken(UUID.fromString(userId));
 
-                ResponseCookie accessCookie = ResponseCookie.from("access_token", newAccessToken)
-                        .httpOnly(true)
-                        .path("/")
-                        .maxAge(Duration.ofMinutes(15))
-                        .sameSite("Strict")
-                        .build();
+                ResponseCookie accessCookie = CookieUtils.buildResponseCookie("access_token", newAccessToken, Duration.ofMinutes(15));
 
                 return ResponseEntity.ok()
                         .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
