@@ -1,25 +1,23 @@
 package app.focusx.model.annotation;
 
-import app.focusx.repository.UserRepository;
+import app.focusx.service.UserService;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 public class UniqueUsernameValidator implements ConstraintValidator<UniqueUsername, String> {
 
-    private final UserRepository repository;
+    private final UserService service;
 
-    public UniqueUsernameValidator(UserRepository repository) {
-        this.repository = repository;
+    public UniqueUsernameValidator(UserService service) {
+        this.service = service;
     }
-
-
 
     @Override
     public boolean isValid(String username, ConstraintValidatorContext context) {
-        if (repository == null) {
+        if (service == null) {
             return true;
         }
 
-        return username != null && !repository.existsByUsernameIgnoreCase(username);
+        return username != null && !service.existsByUsername(username);
     }
 }

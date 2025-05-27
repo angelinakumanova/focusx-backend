@@ -1,5 +1,6 @@
 package app.focusx.web.dto;
 
+import app.focusx.model.annotation.UniqueEmail;
 import app.focusx.model.annotation.UniqueUsername;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
@@ -16,6 +17,7 @@ public class RegisterRequest {
     @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "Username must contain only letters & numbers.")
     private String username;
 
+    @UniqueEmail
     @Email
     @NotEmpty
     private String email;

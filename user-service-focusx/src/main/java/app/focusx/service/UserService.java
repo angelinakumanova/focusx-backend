@@ -126,6 +126,14 @@ public class UserService implements UserDetailsService {
         return optionalUser.get();
     }
 
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsernameIgnoreCase(username);
+    }
+
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
     private User findById(UUID userId) {
         Optional<User> optionalUser = userRepository.getUserById(userId.toString());
 
@@ -148,6 +156,4 @@ public class UserService implements UserDetailsService {
                 .lastModifiedPassword(null)
                 .build();
     }
-
-
 }
