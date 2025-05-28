@@ -18,8 +18,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -116,6 +118,13 @@ public class UserService implements UserDetailsService {
         user.setActive(false);
         user.setDeletedAt(LocalDateTime.now());
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteInactiveUsers() {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
+        List<User> inactiveUsers = userRepository.findByIsActiveFalseAndDeletedAtBefore(cutoff);
+        userRepository.deleteAll(inactiveUsers);
     }
 
     public UserResponse getInfo(UUID userId) {
