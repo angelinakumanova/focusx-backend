@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: user-service-focusx
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
+      database: ${MONGO_DB_NAME}
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+jwt:
+  private-key-path: classpath:keys/private.pem
+  public-key-path: classpath:keys/public.pem

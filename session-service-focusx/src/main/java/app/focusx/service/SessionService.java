@@ -11,6 +11,4 @@ public class SessionService {
     public SessionService(SessionRepository sessionRepository) {
         this.sessionRepository = sessionRepository;
     }
-
-
 }
