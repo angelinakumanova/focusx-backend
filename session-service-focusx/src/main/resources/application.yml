@@ -1,18 +1,17 @@
 spring:
   application:
     name: session-service-focusx
-
   data:
     mongodb:
       uri: ${MONGO_URI}
       database: ${MONGO_DB_NAME}
 
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: session-service-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
+#  kafka:
+#    bootstrap-servers: localhost:9092
+#    consumer:
+#      group-id: session-service-group
+#      auto-offset-reset: earliest
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+#      properties:
+#        spring.json.trusted.packages: "*"

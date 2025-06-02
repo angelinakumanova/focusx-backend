@@ -1,5 +1,6 @@
 package app.focusx.web;
 
+import app.focusx.model.User;
 import app.focusx.security.JwtService;
 import app.focusx.service.UserService;
 import app.focusx.util.CookieUtils;
@@ -36,10 +37,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        UUID userId = userService.verify(request);
+        User user = userService.verify(request);
 
-        String accessToken = jwtService.generateAccessToken(userId);
-        String refreshToken = jwtService.generateRefreshToken(userId);
+        String accessToken = jwtService.generateAccessToken(UUID.fromString(user.getId()), user.getRole().toString());
+        String refreshToken = jwtService.generateRefreshToken(UUID.fromString(user.getId()), user.getRole().toString());
 
 
         ResponseCookie accessTokenCookie = CookieUtils.buildResponseCookie("access_token", accessToken, Duration.ofMinutes(15));
@@ -66,8 +67,9 @@ public class AuthController {
             String userId = jwtService.extractUserId(refreshToken);
 
             if (userId != null) {
+                User user = userService.getById(UUID.fromString(userId));
 
-                String newAccessToken = jwtService.generateAccessToken(UUID.fromString(userId));
+                String newAccessToken = jwtService.generateAccessToken(UUID.fromString(user.getId()), user.getRole().toString());
 
                 ResponseCookie accessCookie = CookieUtils.buildResponseCookie("access_token", newAccessToken, Duration.ofMinutes(15));
 

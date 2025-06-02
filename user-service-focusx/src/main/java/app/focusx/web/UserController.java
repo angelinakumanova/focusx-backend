@@ -3,12 +3,9 @@ package app.focusx.web;
 import app.focusx.service.UserService;
 import app.focusx.util.CookieUtils;
 import app.focusx.web.dto.PasswordUpdateRequest;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")

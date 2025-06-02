@@ -61,13 +61,13 @@ public class UserService implements UserDetailsService {
         producer.send("user-registered", new UserRegisteredEvent(user.getId()));
     }
 
-    public UUID verify(LoginRequest request) {
+    public User verify(LoginRequest request) {
         Authentication auth = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
         AuthenticationMetadata authenticationMetadata = (AuthenticationMetadata) auth.getPrincipal();
 
-        return authenticationMetadata.getUserId();
+        return findById(authenticationMetadata.getUserId());
     }
 
     public void updateUsername(String userId, String username) {

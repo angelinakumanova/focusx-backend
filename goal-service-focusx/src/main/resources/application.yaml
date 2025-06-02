@@ -1,6 +1,6 @@
 spring:
   application:
-    name: user-service-focusx
+    name: goal-service-focusx
   data:
     mongodb:
       uri: ${MONGO_URI}
@@ -10,8 +10,11 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 
 jwt:
-  private-key-path: classpath:keys/private.pem
   public-key-path: classpath:keys/public.pem
 
+server:
+  port: 8081

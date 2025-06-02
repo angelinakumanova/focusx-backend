@@ -23,18 +23,20 @@ public class JwtService {
         this.publicKey = publicKey;
     }
 
-    public String generateAccessToken(UUID userId) {
+    public String generateAccessToken(UUID userId, String role) {
         return Jwts.builder()
                 .subject(userId.toString())
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
                 .signWith(privateKey)
                 .compact();
     }
 
-    public String generateRefreshToken(UUID userId) {
+    public String generateRefreshToken(UUID userId, String role) {
         return Jwts.builder()
                 .subject(userId.toString())
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
                 .signWith(privateKey)
