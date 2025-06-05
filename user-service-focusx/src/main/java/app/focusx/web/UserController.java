@@ -39,4 +39,9 @@ public class UserController {
 
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{id}/streak")
+    public long streak(@PathVariable String id) {
+        return userService.getStreakById(id);
+    }
 }

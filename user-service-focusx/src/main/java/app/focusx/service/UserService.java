@@ -58,7 +58,6 @@ public class UserService implements UserDetailsService {
 
     public void register(RegisterRequest request) {
         User user = this.userRepository.save(createNewUser(request));
-        producer.send("user-registered", new UserRegisteredEvent(user.getId()));
     }
 
     public User verify(LoginRequest request) {
@@ -159,6 +158,12 @@ public class UserService implements UserDetailsService {
         return userRepository.existsByEmail(email);
     }
 
+    public long getStreakById(String id) {
+        User user = getById(UUID.fromString(id));
+
+        return user.getStreak();
+    }
+
     private User findById(UUID userId) {
         Optional<User> optionalUser = userRepository.getUserById(userId.toString());
 
@@ -180,6 +185,9 @@ public class UserService implements UserDetailsService {
                 .lastModifiedUsername(null)
                 .lastModifiedPassword(null)
                 .createdAt(LocalDateTime.now())
+                .streak(0)
                 .build();
     }
+
+
 }

@@ -27,6 +27,7 @@ public class User {
     private LocalDateTime lastModifiedPassword;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
+    private long streak;
 
 
 }

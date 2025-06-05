@@ -5,9 +5,6 @@ import app.focusx.service.SessionService;
 import app.focusx.web.dto.SessionCreateRequest;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.ZoneId;
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/sessions")
 public class SessionController {
