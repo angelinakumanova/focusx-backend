@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # 4️⃣ Package the app using Maven Wrapper (without running tests)
-RUN ./mvnw package -DskipTests
+RUN mvn clean package -DskipTests
 
 # 5️⃣ Define the startup command
 CMD ["java", "-jar", "target/focusx-0.0.1-SNAPSHOT.jar"]
