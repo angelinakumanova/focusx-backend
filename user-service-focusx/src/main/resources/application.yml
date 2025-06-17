@@ -12,6 +12,6 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 jwt:
-  private-key-path: file:/etc/secrets/jwt/private.pem
+  private-key-path: file:/etc/secrets/private.pem
   public-key-path: classpath:keys/public.pem
 
