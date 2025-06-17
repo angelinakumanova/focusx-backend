@@ -1,10 +1,21 @@
-# 1️⃣ Base image with Java
+# Base image with Java and Maven
 FROM eclipse-temurin:21-jdk
 
-# 2️⃣ Set working directory inside the container
+# Set working directory
 WORKDIR /app
 
-COPY target/focusx-0.0.1-SNAPSHOT.jar app.jar
+# Copy only the Maven wrapper
+COPY mvnw .
+COPY .mvn .mvn
 
-# Run the JAR
-CMD ["java", "-jar", "app.jar"]
+# Give execution permissions
+RUN chmod +x mvnw
+
+# Copy the rest of your service's code
+COPY . .
+
+# Build the jar
+RUN ./mvnw clean package -DskipTests
+
+# Run the app
+CMD ["java", "-jar", "target/focusx-0.0.1-SNAPSHOT.jar"]
