@@ -7,8 +7,6 @@ WORKDIR /app
 # 3️⃣ Copy the project files into the container
 COPY . .
 
-RUN chmod +x mvnw
-
 RUN ./mvnw package -DskipTests
 
 # 5️⃣ Define the startup command
