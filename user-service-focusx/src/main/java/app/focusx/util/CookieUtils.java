@@ -23,7 +23,6 @@ public class CookieUtils {
     }
 
 
-    // TODO: Set secure to "true" in production
     public static ResponseCookie buildResponseCookie(
             String name,
             String value,
@@ -31,6 +30,7 @@ public class CookieUtils {
     ) {
         return ResponseCookie.from(name, value)
                 .httpOnly(true)
+                .secure(true)
                 .path("/")
                 .maxAge(maxAge)
                 .sameSite("Strict")
