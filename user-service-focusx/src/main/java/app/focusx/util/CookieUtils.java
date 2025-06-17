@@ -33,7 +33,7 @@ public class CookieUtils {
                 .secure(true)
                 .path("/")
                 .maxAge(maxAge)
-                .sameSite("Strict")
+                .sameSite("None")
                 .secure(true)
                 .build();
     }
