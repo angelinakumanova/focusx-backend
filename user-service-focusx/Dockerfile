@@ -4,8 +4,7 @@ FROM eclipse-temurin:21-jdk
 # 2️⃣ Set working directory inside the container
 WORKDIR /app
 
-# 3️⃣ Copy the project files into the container
-COPY . .
+COPY target/focusx-0.0.1-SNAPSHOT.jar app.jar
 
-# 5️⃣ Define the startup command
-CMD ["java", "-jar", "target/focusx-0.0.1-SNAPSHOT.jar"]
+# Run the JAR
+CMD ["java", "-jar", "app.jar"]
