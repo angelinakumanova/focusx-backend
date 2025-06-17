@@ -1,14 +1,20 @@
-# 1️⃣ Base image with Java
-FROM eclipse-temurin:21-jdk
+# ---------- STAGE 1: Build ----------
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 
-# 2️⃣ Set working directory inside the container
 WORKDIR /app
 
-# 3️⃣ Copy the project files into the container
+# Copy everything and build the JAR
 COPY . .
-
-# 4️⃣ Package the app using Maven Wrapper (without running tests)
 RUN mvn clean package -DskipTests
 
-# 5️⃣ Define the startup command
-CMD ["java", "-jar", "target/focusx-0.0.1-SNAPSHOT.jar"]
+
+# ---------- STAGE 2: Run ----------
+FROM eclipse-temurin:21-jdk
+
+WORKDIR /app
+
+# Copy only the JAR from the build stage
+COPY --from=build /app/target/focusx-0.0.1-SNAPSHOT.jar app.jar
+
+# Run the JAR
+CMD ["java", "-jar", "app.jar"]
