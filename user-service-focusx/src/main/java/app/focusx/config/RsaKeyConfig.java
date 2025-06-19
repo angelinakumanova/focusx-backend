@@ -16,15 +16,14 @@ import java.util.Base64;
 public class RsaKeyConfig {
 
     @Value("${jwt.private-key-path}")
-    private Resource privateKeyResource;
+    private String privateKeyPem;
 
     @Value("${jwt.public-key-path}")
     private Resource publicKeyResource;
 
     @Bean
     public RSAPrivateKey rsaPrivateKey() throws Exception {
-        String key = new String(privateKeyResource.getInputStream().readAllBytes());
-        key = key.replace("-----BEGIN PRIVATE KEY-----", "")
+        String key = privateKeyPem.replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replaceAll("\\s+", "");
 
