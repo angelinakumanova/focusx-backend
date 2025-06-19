@@ -3,7 +3,6 @@ package app.focusx.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
 
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
@@ -16,14 +15,14 @@ import java.util.Base64;
 public class RsaKeyConfig {
 
     @Value("${jwt.private-key-path}")
-    private String privateKeyPem;
+    private String privateKey;
 
     @Value("${jwt.public-key-path}")
-    private Resource publicKeyResource;
+    private String publicKey;
 
     @Bean
     public RSAPrivateKey rsaPrivateKey() throws Exception {
-        String key = privateKeyPem.replace("-----BEGIN PRIVATE KEY-----", "")
+        String key = privateKey.replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replaceAll("\\s+", "");
 
@@ -37,8 +36,7 @@ public class RsaKeyConfig {
 
     @Bean
     public RSAPublicKey rsaPublicKey() throws Exception {
-        String key = new String(publicKeyResource.getInputStream().readAllBytes());
-        key = key.replace("-----BEGIN PUBLIC KEY-----", "")
+        String key = publicKey.replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
                 .replaceAll("\\s+", "");
 
