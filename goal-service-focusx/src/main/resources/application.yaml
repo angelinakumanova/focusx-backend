@@ -12,6 +12,14 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG              # Logs HTTP requests/responses
+    org.springframework.data.mongodb.core: DEBUG  # Logs Mongo operations like save(), find(), etc.
+    org.mongodb.driver: DEBUG                   # Logs low-level MongoDB driver activity
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
 
 jwt:
   public-key-path: classpath:keys/public.pem
