@@ -3,10 +3,12 @@ package app.focusx.web;
 import app.focusx.service.GoalService;
 import app.focusx.web.dto.CreateGoalRequest;
 import app.focusx.web.dto.GoalResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/goals")
 public class GoalController {
@@ -24,7 +26,10 @@ public class GoalController {
 
     @GetMapping("/{userId}")
     public List<GoalResponse> getGoals(@PathVariable String userId) {
-        return goalService.getAll(userId);
+        log.info("Getting goals for {}", userId);
+        List<GoalResponse>  goals =  goalService.getAll(userId);
+        log.info("Found {} goals", goals.size());
+        return goals;
     }
 
     @DeleteMapping("/{goalId}")
