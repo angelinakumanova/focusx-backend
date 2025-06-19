@@ -14,10 +14,10 @@ import java.util.Base64;
 @Configuration
 public class RsaKeyConfig {
 
-    @Value("${jwt.private-key-path}")
+    @Value("${jwt.private-key}")
     private String privateKey;
 
-    @Value("${jwt.public-key-path}")
+    @Value("${jwt.public-key}")
     private String publicKey;
 
     @Bean
