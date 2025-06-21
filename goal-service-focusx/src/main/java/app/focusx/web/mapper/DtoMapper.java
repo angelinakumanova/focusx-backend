@@ -10,7 +10,7 @@ public class DtoMapper {
     public GoalResponse mapGoalToGoalResponse(Goal goal) {
         return GoalResponse.builder()
                 .id(goal.getId())
-                .name(goal.getName())
+                .name(goal.getTitle())
                 .type(goal.getType().toString())
                 .sets(goal.getSets())
                 .duration(goal.getDuration())
