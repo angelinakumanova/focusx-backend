@@ -29,6 +29,7 @@ public class CookieUtils {
             Duration maxAge
     ) {
         return ResponseCookie.from(name, value)
+                .domain(".up.railway.app")
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
