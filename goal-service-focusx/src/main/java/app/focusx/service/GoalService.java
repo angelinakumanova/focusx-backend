@@ -45,16 +45,12 @@ public class GoalService {
                 .progress(0).build();
 
         if (request.getType() == GoalType.SESSION) {
-           if (request.getSets() == 0 || request.getDuration() == 0) {
-               throw new IllegalArgumentException("Sets and duration are required for sessions");
-           }
+
            goal.setSets(request.getSets());
            goal.setDuration(request.getDuration());
            return goalRepository.save(goal);
         } else if (request.getType() == GoalType.STREAK) {
-            if (request.getDays() == 0) {
-                throw new IllegalArgumentException("Days is required for streaks");
-            }
+          
             goal.setDays(request.getDays());
             return goalRepository.save(goal);
         }

@@ -34,7 +34,7 @@ public class SessionService {
         Instant utcStart = startOfDay.toInstant();
         Instant utcEnd = endOfDay.toInstant();
 
-        List<Session> todaysSessions = sessionRepository.findByCompletedAtBetween(utcStart, utcEnd);
+        List<Session> todaysSessions = sessionRepository.findByCompletedAtBetweenAndUserId(utcStart, utcEnd, userId);
         return todaysSessions.stream().map(Session::getMinutes).reduce(0L, Long::sum);
     }
 

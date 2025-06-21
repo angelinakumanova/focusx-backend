@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface SessionRepository extends MongoRepository<Session, String> {
-    List<Session> findByCompletedAtBetween(Instant utcStart, Instant utcEnd);
+    List<Session> findByCompletedAtBetweenAndUserId(Instant completedAtAfter, Instant completedAtBefore, String userId);
 }
