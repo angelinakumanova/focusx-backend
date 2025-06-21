@@ -15,19 +15,32 @@ public class GoalRequestValidator implements ConstraintValidator<ValidGoalReques
         context.disableDefaultConstraintViolation();
 
         if (request.getType() == GoalType.SESSION) {
+
+
             if (request.getSets() <= 0) {
-                context.buildConstraintViolationWithTemplate("Sets must be greater than 0 for session goals")
+                context.buildConstraintViolationWithTemplate("Sets must be greater than 0!")
+                        .addPropertyNode("sets").addConstraintViolation();
+                valid = false;
+            } else if (request.getSets() > 10) {
+                context.buildConstraintViolationWithTemplate("Maximum allowed sets are 10!")
                         .addPropertyNode("sets").addConstraintViolation();
                 valid = false;
             }
+
+
             if (request.getDuration() <= 0) {
-                context.buildConstraintViolationWithTemplate("Duration must be greater than 0 for session goals")
+                context.buildConstraintViolationWithTemplate("Duration must be greater than 0!")
+                        .addPropertyNode("duration").addConstraintViolation();
+                valid = false;
+            } else if (request.getDuration() > 60) {
+                context.buildConstraintViolationWithTemplate("Maximum allowed duration is 60!")
                         .addPropertyNode("duration").addConstraintViolation();
                 valid = false;
             }
+
         } else if (request.getType() == GoalType.STREAK) {
             if (request.getDays() <= 0) {
-                context.buildConstraintViolationWithTemplate("Days must be greater than 0 for streak goals")
+                context.buildConstraintViolationWithTemplate("Days must be greater than 0!")
                         .addPropertyNode("days").addConstraintViolation();
                 valid = false;
             }
