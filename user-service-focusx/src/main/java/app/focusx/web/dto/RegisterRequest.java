@@ -1,7 +1,7 @@
 package app.focusx.web.dto;
 
-import app.focusx.model.annotation.UniqueEmail;
-import app.focusx.model.annotation.UniqueUsername;
+import app.focusx.validation.UniqueEmail;
+import app.focusx.validation.UniqueUsername;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;

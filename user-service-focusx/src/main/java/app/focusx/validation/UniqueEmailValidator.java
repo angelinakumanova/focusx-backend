@@ -1,4 +1,4 @@
-package app.focusx.model.annotation;
+package app.focusx.validation;
 
 import app.focusx.service.UserService;
 import jakarta.validation.ConstraintValidator;
