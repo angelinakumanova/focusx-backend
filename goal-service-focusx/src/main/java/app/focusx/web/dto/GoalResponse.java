@@ -9,7 +9,7 @@ public class GoalResponse {
 
     private String id;
     private String type;
-    private String name;
+    private String title;
     private long progress;
     private String reward;
     private long sets;
