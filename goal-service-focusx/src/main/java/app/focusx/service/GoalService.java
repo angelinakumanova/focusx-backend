@@ -39,7 +39,7 @@ public class GoalService {
         Goal goal = Goal.builder()
                 .id(UUID.randomUUID().toString())
                 .userId(userId)
-                .name(request.getName())
+                .name(request.getTitle())
                 .type(request.getType())
                 .reward(request.getReward())
                 .progress(0).build();

@@ -1,6 +1,5 @@
 package app.focusx.service;
 
-import app.focusx.event.UserRegisteredEvent;
 import app.focusx.exception.PasswordUpdateException;
 import app.focusx.exception.UsernameUpdateException;
 import app.focusx.model.User;
@@ -32,14 +31,12 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
-    private final KafkaProducer producer;
 
     private final BCryptPasswordEncoder encoder;
 
-    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager, KafkaProducer producer) {
+    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
-        this.producer = producer;
         this.encoder = new BCryptPasswordEncoder(12);
     }
 
