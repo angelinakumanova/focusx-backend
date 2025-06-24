@@ -11,12 +11,16 @@ public class CookieUtils {
 
     public static void clearAuthCookies(HttpServletResponse response) {
         Cookie accessTokenCookie = new Cookie("access_token", null);
+        accessTokenCookie.setDomain(DOMAIN_NAME);
+        accessTokenCookie.setAttribute("SameSite", "None");
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge(0);
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", null);
+        refreshTokenCookie.setDomain(DOMAIN_NAME);
+        refreshTokenCookie.setAttribute("SameSite", "None");
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
