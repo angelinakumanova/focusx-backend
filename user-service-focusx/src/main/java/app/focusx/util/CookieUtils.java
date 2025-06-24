@@ -11,9 +11,11 @@ public class CookieUtils {
 
     public static void clearAuthCookies(HttpServletResponse response) {
         Cookie accessTokenCookie = new Cookie("access_token", null);
+        accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge(0);
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", null);
+        refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(0);
 
         response.addCookie(accessTokenCookie);
