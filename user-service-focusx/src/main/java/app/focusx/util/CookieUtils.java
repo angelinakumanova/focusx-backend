@@ -7,13 +7,19 @@ import org.springframework.http.ResponseCookie;
 import java.time.Duration;
 
 public class CookieUtils {
+    private static final String DOMAIN_NAME = ".up.railway.app";
+
     public static void clearAuthCookies(HttpServletResponse response) {
         Cookie accessTokenCookie = new Cookie("access_token", null);
+        accessTokenCookie.setDomain(DOMAIN_NAME);
+        accessTokenCookie.setSecure(true);
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge(0);
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", null);
+        refreshTokenCookie.setDomain(DOMAIN_NAME);
+        refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(0);
@@ -29,7 +35,7 @@ public class CookieUtils {
             Duration maxAge
     ) {
         return ResponseCookie.from(name, value)
-                .domain(".up.railway.app")
+                .domain(DOMAIN_NAME)
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
