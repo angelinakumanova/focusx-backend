@@ -29,9 +29,9 @@ public class CookieUtils {
             Duration maxAge
     ) {
         return ResponseCookie.from(name, value)
-                .domain(".up.railway.app")
+//                .domain(".up.railway.app")
                 .httpOnly(true)
-                .secure(true)
+//                .secure(true)
                 .path("/")
                 .maxAge(maxAge)
                 .sameSite("None")

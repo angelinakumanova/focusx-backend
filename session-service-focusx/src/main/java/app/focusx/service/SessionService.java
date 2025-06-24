@@ -1,8 +1,11 @@
 package app.focusx.service;
 
+import app.focusx.messaging.producer.SessionEventProducer;
 import app.focusx.model.Session;
 import app.focusx.repository.SessionRepository;
 import app.focusx.web.dto.SessionCreateRequest;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -16,16 +19,38 @@ import java.util.UUID;
 public class SessionService {
 
     private final SessionRepository sessionRepository;
+    private final SessionEventProducer producer;
 
-    public SessionService(SessionRepository sessionRepository) {
+    public SessionService(SessionRepository sessionRepository, SessionEventProducer producer) {
         this.sessionRepository = sessionRepository;
+        this.producer = producer;
     }
 
+    @CacheEvict(value ="duration", key = "#request.userId")
     public void add(SessionCreateRequest request) {
+        sendNewSessionEvent(request.getUserId(), request.getUserTimezone());
         sessionRepository.save(initializeSession(request));
     }
 
+    @Cacheable(value = "duration", key = "#userId")
     public long getTodaysDuration(String userId, String userTimeZone) {
+        return getTodaysSessions(userId, userTimeZone)
+                .stream()
+                .map(Session::getMinutes)
+                .reduce(0L, Long::sum);
+    }
+
+    private void sendNewSessionEvent(String userId, String timezone) {
+
+
+        if (!getTodaysSessions(userId, timezone).isEmpty()) {
+            return;
+        }
+
+        producer.sendNewSessionAddedEvent(userId);
+    }
+
+    private List<Session> getTodaysSessions(String userId, String userTimeZone) {
         ZoneId userZone = ZoneId.of(userTimeZone);
 
         ZonedDateTime startOfDay = LocalDate.now(userZone).atStartOfDay(userZone);
@@ -34,8 +59,7 @@ public class SessionService {
         Instant utcStart = startOfDay.toInstant();
         Instant utcEnd = endOfDay.toInstant();
 
-        List<Session> todaysSessions = sessionRepository.findByCompletedAtBetweenAndUserId(utcStart, utcEnd, userId);
-        return todaysSessions.stream().map(Session::getMinutes).reduce(0L, Long::sum);
+        return sessionRepository.findByCompletedAtBetweenAndUserId(utcStart, utcEnd, userId);
     }
 
     private Session initializeSession(SessionCreateRequest request) {

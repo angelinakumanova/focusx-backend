@@ -28,6 +28,7 @@ public class User {
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
     private long streak;
+    private LocalDateTime lastUpdatedStreak;
 
 
 }

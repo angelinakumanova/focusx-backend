@@ -10,6 +10,8 @@ import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
 import app.focusx.web.dto.UserResponse;
 import app.focusx.web.mapper.DtoMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,7 +22,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,7 +56,7 @@ public class UserService implements UserDetailsService {
     }
 
     public void register(RegisterRequest request) {
-        User user = this.userRepository.save(createNewUser(request));
+        this.userRepository.save(createNewUser(request));
     }
 
     public User verify(LoginRequest request) {
@@ -66,6 +68,7 @@ public class UserService implements UserDetailsService {
         return findById(authenticationMetadata.getUserId());
     }
 
+    @CacheEvict(value = "users", key = "#userId")
     public void updateUsername(String userId, String username) {
         User user = findById(UUID.fromString(userId));
 
@@ -127,6 +130,7 @@ public class UserService implements UserDetailsService {
         userRepository.deleteAll(inactiveUsers);
     }
 
+    @Cacheable(value = "users", key = "#userId")
     public UserResponse getInfo(UUID userId) {
         Optional<User> optionalUser = userRepository.getUserById(userId.toString());
 
@@ -155,8 +159,37 @@ public class UserService implements UserDetailsService {
         return userRepository.existsByEmail(email);
     }
 
-    public long getStreakById(String id) {
+
+//    @Cacheable(value = "streaks", key = "#id")
+    public long getStreak(String id, String timezone) {
+        return validateStreak(id, timezone);
+    }
+
+//    @CachePut(value = "streaks", key = "#id")
+    public long incrementStreak(String id) {
         User user = getById(UUID.fromString(id));
+        user.setStreak(user.getStreak() + 1);
+        user.setLastUpdatedStreak(LocalDateTime.now(ZoneOffset.UTC));
+
+        return userRepository.save(user).getStreak();
+    }
+
+    private long validateStreak(String id, String timezone) {
+        User user = getById(UUID.fromString(id));
+        LocalDateTime lastUpdatedStreak = user.getLastUpdatedStreak();
+
+        if (lastUpdatedStreak != null) {
+            ZoneId userZone = ZoneId.of(timezone);
+
+            ZonedDateTime lastUpdatedZoned = lastUpdatedStreak.atZone(ZoneOffset.UTC).withZoneSameInstant(userZone);
+
+            ZonedDateTime startOfToday = ZonedDateTime.now(userZone).toLocalDate().atStartOfDay(userZone);
+
+            if (lastUpdatedZoned.isBefore(startOfToday)) {
+                user.setStreak(0);
+                return userRepository.save(user).getStreak();
+            }
+        }
 
         return user.getStreak();
     }
@@ -179,8 +212,6 @@ public class UserService implements UserDetailsService {
                 .password(encoder.encode(request.getPassword()))
                 .isActive(true)
                 .role(UserRole.USER)
-                .lastModifiedUsername(null)
-                .lastModifiedPassword(null)
                 .createdAt(LocalDateTime.now())
                 .streak(0)
                 .build();

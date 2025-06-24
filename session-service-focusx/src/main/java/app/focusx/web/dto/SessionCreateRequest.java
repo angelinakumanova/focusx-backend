@@ -7,5 +7,5 @@ public class SessionCreateRequest {
 
     private String userId;
     private long minutes;
-
+    private String userTimezone;
 }

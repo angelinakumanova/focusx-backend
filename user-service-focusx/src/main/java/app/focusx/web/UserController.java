@@ -41,7 +41,9 @@ public class UserController {
     }
 
     @GetMapping("/{id}/streak")
-    public long streak(@PathVariable String id) {
-        return userService.getStreakById(id);
+    public long streak(@PathVariable String id, @RequestHeader String timezone) {
+        return userService.getStreak(id, timezone);
     }
+
+
 }
