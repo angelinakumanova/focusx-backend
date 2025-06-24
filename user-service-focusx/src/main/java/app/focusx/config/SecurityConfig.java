@@ -20,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import static app.focusx.util.CookieUtils.clearAuthCookies;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
@@ -45,6 +46,12 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .logout(logout -> logout.logoutUrl("/logout")
+                        .deleteCookies("access_token", "refresh_token")
+                        .logoutSuccessHandler((request, response, auth) -> {
+                            clearAuthCookies(response);
+                            response.setStatus(HttpServletResponse.SC_OK);
+                        }))
                 .build();
     }
 

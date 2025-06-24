@@ -53,13 +53,6 @@ public class AuthController {
                 .build();
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
-        CookieUtils.clearAuthCookies(response);
-
-        return ResponseEntity.ok("Logged out");
-    }
-
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@CookieValue(value = "refresh_token", required = false) String refreshToken) {
 
