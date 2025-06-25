@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .logout(logout -> logout.logoutUrl("/logout")
                         .deleteCookies("access_token", "refresh_token")
                         .logoutSuccessHandler((request, response, auth) -> {
-                            clearAuthCookies(request, response);
+                            clearAuthCookies(response);
                             response.setStatus(HttpServletResponse.SC_OK);
                         }))
                 .build();

@@ -33,10 +33,10 @@ public class UserController {
     }
 
     @PutMapping("/{id}/deactivate")
-    public ResponseEntity<?> deleteAccount(@PathVariable String id, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> deleteAccount(@PathVariable String id, HttpServletResponse response) {
         userService.deactivate(id);
 
-        CookieUtils.clearAuthCookies(request, response);
+        CookieUtils.clearAuthCookies(response);
 
         return ResponseEntity.ok().build();
     }

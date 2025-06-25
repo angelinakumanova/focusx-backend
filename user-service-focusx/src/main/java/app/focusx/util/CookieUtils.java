@@ -1,35 +1,33 @@
 package app.focusx.util;
 
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;
 
 import java.time.Duration;
 
 public class CookieUtils {
-    private static final String DOMAIN_NAME = ".up.railway.app";
+    private static final String DOMAIN_NAME = "focusx.up.railway.app";
 
-    public static void clearAuthCookies(HttpServletRequest request, HttpServletResponse response) {
-        Cookie[] cookies = request.getCookies();
+    public static void clearAuthCookies(HttpServletResponse response) {
+        Cookie accessTokenCookie = new Cookie("access_token", null);
+        accessTokenCookie.setDomain(DOMAIN_NAME);
+        accessTokenCookie.setAttribute("SameSite", "None");
+        accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setSecure(true);
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(0);
 
-        if (cookies == null) return;
+        Cookie refreshTokenCookie = new Cookie("refresh_token", null);
+        refreshTokenCookie.setDomain(DOMAIN_NAME);
+        refreshTokenCookie.setAttribute("SameSite", "None");
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(0);
 
-        for (Cookie cookie : cookies) {
-            if (cookie.getName().equals("access_token") || cookie.getName().equals("refresh_token")) {
-                Cookie cleared = new Cookie(cookie.getName(), null);
-                cleared.setPath(cookie.getPath() != null ? cookie.getPath() : "/");
-                cleared.setHttpOnly(cookie.isHttpOnly());
-                cleared.setSecure(cookie.getSecure());
-                cleared.setMaxAge(0);
-
-                if (cookie.getDomain() != null) {
-                    cleared.setDomain(cookie.getDomain());
-                }
-
-                response.addCookie(cleared);
-            }
-        }
+        response.addCookie(accessTokenCookie);
+        response.addCookie(refreshTokenCookie);
     }
 
 
