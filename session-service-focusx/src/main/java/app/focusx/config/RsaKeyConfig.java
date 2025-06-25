@@ -13,13 +13,12 @@ import java.util.Base64;
 @Configuration
 public class RsaKeyConfig {
 
-    @Value("${jwt.public-key-path}")
-    private Resource publicKeyResource;
+    @Value("${jwt.public-key}")
+    private String publicKey;
 
     @Bean
     public RSAPublicKey rsaPublicKey() throws Exception {
-        String key = new String(publicKeyResource.getInputStream().readAllBytes());
-        key = key.replace("-----BEGIN PUBLIC KEY-----", "")
+        String key = publicKey.replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
                 .replaceAll("\\s+", "");
 

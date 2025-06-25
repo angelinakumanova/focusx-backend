@@ -6,14 +6,29 @@ spring:
       uri: ${MONGO_URI}
       database: ${MONGO_DB_NAME}
   kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    bootstrap-servers: pkc-75m1o.europe-west3.gcp.confluent.cloud:9092
+    properties:
+      sasl:
+        mechanism: PLAIN
+        jaas:
+          config: >
+            org.apache.kafka.common.security.plain.PlainLoginModule required
+            username='${KAFKA_API_KEY}'
+            password='${KAFKA_API_SECRET}';
+      security:
+        protocol: SASL_SSL
+      session:
+        timeout:
+          ms: 45000
+
+
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 jwt:
-  public-key-path: classpath:keys/public.pem
+  public-key: ${JWT_PUBLIC_KEY}
 
 server:
   port: 8081
+
+client:
+  id: ccloud-springboot-client-96a8c99e-2a1c-4b8c-90d2-d416052cb768
