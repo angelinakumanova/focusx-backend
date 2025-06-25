@@ -47,7 +47,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout.logoutUrl("/logout")
-                        .deleteCookies("access_token", "refresh_token")
+//                        .deleteCookies("access_token", "refresh_token")
                         .logoutSuccessHandler((request, response, auth) -> {
                             clearAuthCookies(response);
                             response.setStatus(HttpServletResponse.SC_OK);
