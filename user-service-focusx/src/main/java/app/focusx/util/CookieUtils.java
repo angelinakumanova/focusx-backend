@@ -7,7 +7,7 @@ import org.springframework.http.ResponseCookie;
 import java.time.Duration;
 
 public class CookieUtils {
-    private static final String DOMAIN_NAME = "focusx.up.railway.app";
+    private static final String DOMAIN_NAME = ".up.railway.app";
 
     public static void clearAuthCookies(HttpServletResponse response) {
         Cookie accessTokenCookie = new Cookie("access_token", null);
