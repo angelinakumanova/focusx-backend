@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseCookie;
 
 import java.time.Duration;
-import java.util.Arrays;
 
 public class CookieUtils {
     private static final String DOMAIN_NAME = ".up.railway.app";

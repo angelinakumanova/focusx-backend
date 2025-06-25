@@ -3,6 +3,7 @@ package app.focusx.web;
 import app.focusx.service.UserService;
 import app.focusx.util.CookieUtils;
 import app.focusx.web.dto.PasswordUpdateRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,10 +33,10 @@ public class UserController {
     }
 
     @PutMapping("/{id}/deactivate")
-    public ResponseEntity<?> deleteAccount(@PathVariable String id, HttpServletResponse response) {
+    public ResponseEntity<?> deleteAccount(@PathVariable String id, HttpServletRequest request, HttpServletResponse response) {
         userService.deactivate(id);
 
-        CookieUtils.clearAuthCookies(response);
+        CookieUtils.clearAuthCookies(request, response);
 
         return ResponseEntity.ok().build();
     }
