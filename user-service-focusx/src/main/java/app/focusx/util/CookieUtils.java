@@ -11,14 +11,14 @@ public class CookieUtils {
 
     public static void clearAuthCookies(HttpServletResponse response) {
         Cookie accessTokenCookie = new Cookie("access_token", null);
-        accessTokenCookie.setDomain(DOMAIN_NAME);
+        accessTokenCookie.setDomain("up.railway.app");
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge(0);
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", null);
-        refreshTokenCookie.setDomain(DOMAIN_NAME);
+        refreshTokenCookie.setDomain("up.railway.app");
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
