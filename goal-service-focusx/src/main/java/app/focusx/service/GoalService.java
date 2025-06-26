@@ -57,6 +57,7 @@ public class GoalService {
                 .title(request.getTitle())
                 .type(request.getType())
                 .reward(request.getReward())
+                .isCompleted(false)
                 .progress(0).build();
 
         if (request.getType() == GoalType.SESSION) {
