@@ -93,7 +93,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
-    @GetMapping
+    @GetMapping("/logout")
     public void logout(HttpServletResponse response) {
         CookieUtils.clearAuthCookies(response);
     }
