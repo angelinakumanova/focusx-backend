@@ -2,10 +2,12 @@ package app.focusx.messaging.producer;
 
 import app.focusx.messaging.event.SessionEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class SessionEventProducer {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
@@ -25,12 +27,12 @@ public class SessionEventProducer {
     }
 
     private void sendSessionEvent(SessionEvent event) {
-        throw new RuntimeException("Failed to send session event");
-//        try {
-//            String message = objectMapper.writeValueAsString(event);
-//            kafkaTemplate.send("session-events", message);
-//        } catch (Exception e) {
-//            throw new RuntimeException("Failed to send session event", e);
-//        }
+        try {
+            String message = objectMapper.writeValueAsString(event);
+            kafkaTemplate.send("session-events", message);
+        throw new RuntimeException();
+        } catch (Exception e) {
+            log.error("Failed to send session event", e);
+        }
     }
 }
