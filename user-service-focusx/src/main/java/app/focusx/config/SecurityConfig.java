@@ -46,12 +46,13 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .logout(logout -> logout.logoutUrl("/logout")
-//                        .deleteCookies("access_token", "refresh_token")
-                        .logoutSuccessHandler((request, response, auth) -> {
-                            clearAuthCookies(response);
-                            response.setStatus(HttpServletResponse.SC_OK);
-                        }))
+                .logout(logout -> logout.logoutUrl("/api/auth/logout")
+                        .deleteCookies("access_token", "refresh_token")
+//                        .logoutSuccessHandler((request, response, auth) -> {
+//                            clearAuthCookies(response);
+//                            response.setStatus(HttpServletResponse.SC_OK);
+//                        })
+                )
                 .build();
     }
 
