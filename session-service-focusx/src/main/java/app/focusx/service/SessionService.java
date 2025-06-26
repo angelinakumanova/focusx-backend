@@ -28,7 +28,7 @@ public class SessionService {
 
     @CacheEvict(value ="duration", key = "#request.userId")
     public void add(SessionCreateRequest request) {
-        sendNewSessionEvent(request.getUserId(), request.getUserTimezone());
+        sendNewSessionEvent(request.getUserId(), request.getMinutes(), request.getUserTimezone());
         sessionRepository.save(initializeSession(request));
     }
 
@@ -40,14 +40,14 @@ public class SessionService {
                 .reduce(0L, Long::sum);
     }
 
-    private void sendNewSessionEvent(String userId, String timezone) {
+    private void sendNewSessionEvent(String userId, long minutes, String timezone) {
 
 
         if (!getTodaysSessions(userId, timezone).isEmpty()) {
             return;
         }
 
-        producer.sendNewSessionAddedEvent(userId);
+        producer.sendNewSessionAddedEvent(userId, minutes);
     }
 
     private List<Session> getTodaysSessions(String userId, String userTimeZone) {

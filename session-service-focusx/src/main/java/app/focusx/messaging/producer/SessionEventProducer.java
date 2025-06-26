@@ -18,11 +18,7 @@ public class SessionEventProducer {
         this.objectMapper = objectMapper;
     }
 
-    public void sendNewSessionAddedEvent(String userId) {
-        sendSessionEvent(new SessionEvent(userId, null));
-    }
-
-    public void sendSessionWithMinutes(String userId, long minutes) {
+    public void sendNewSessionAddedEvent(String userId, long minutes) {
         sendSessionEvent(new SessionEvent(userId, minutes));
     }
 
