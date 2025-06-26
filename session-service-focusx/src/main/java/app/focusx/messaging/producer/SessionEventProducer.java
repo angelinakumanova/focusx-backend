@@ -30,7 +30,6 @@ public class SessionEventProducer {
         try {
             String message = objectMapper.writeValueAsString(event);
             kafkaTemplate.send("session-events", message);
-        throw new RuntimeException();
         } catch (Exception e) {
             log.error("Failed to send session event", e);
         }

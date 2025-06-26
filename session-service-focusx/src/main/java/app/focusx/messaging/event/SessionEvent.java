@@ -1,5 +1,10 @@
 package app.focusx.messaging.event;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class SessionEvent {
     private String userId;
     private Long minutes;
