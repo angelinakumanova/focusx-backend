@@ -1,5 +1,6 @@
-package app.focusx.messaging;
+package app.focusx.messaging.consumer;
 
+import app.focusx.messaging.event.SessionEvent;
 import app.focusx.service.UserService;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -14,7 +15,7 @@ public class SessionListener {
     }
 
     @KafkaListener(topics = "session-events", groupId = "session-service")
-    public void listen(String userId) {
-        userService.incrementStreak(userId);
+    public void listen(SessionEvent sessionEvent) {
+        userService.incrementStreak(sessionEvent.getUserId());
     }
 }
