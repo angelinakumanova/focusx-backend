@@ -7,6 +7,7 @@ import app.focusx.web.dto.CreateGoalRequest;
 import app.focusx.web.dto.GoalResponse;
 import app.focusx.web.mapper.DtoMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +36,20 @@ public class GoalService {
         goalRepository.deleteById(goalId);
     }
 
+    @Transactional
+    public void addMinutesToGoals(String userId, Long minutes) {
+        List<Goal> goals = goalRepository.getByUserIdAndTypeAndIsCompleted(userId, GoalType.SESSION, false);
+
+        goals.forEach(goal -> {
+            goal.setProgress(goal.getProgress() + minutes);
+            if (goal.getProgress() == goal.getDuration()) {
+                goal.setCompleted(true);
+            }
+
+            goalRepository.save(goal);
+        });
+    }
+
     private Goal initializeGoal(String userId, CreateGoalRequest request) {
         Goal goal = Goal.builder()
                 .id(UUID.randomUUID().toString())
@@ -57,4 +72,6 @@ public class GoalService {
         throw new IllegalArgumentException("Unsupported type " + request.getType());
 
     }
+
+
 }

@@ -25,4 +25,5 @@ public class Goal {
     private long days;
     private long progress;
     private String reward;
+    private boolean isCompleted;
 }
