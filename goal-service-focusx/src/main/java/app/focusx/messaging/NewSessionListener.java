@@ -21,7 +21,7 @@ public class NewSessionListener {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = "session-events", groupId = "session-service")
+    @KafkaListener(topics = "session-events", groupId = "goal-service")
     public void listen(ConsumerRecord<String, String> record) {
         try {
             SessionEvent event = objectMapper.readValue(record.value(), SessionEvent.class);

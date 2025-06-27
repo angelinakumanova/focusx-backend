@@ -7,5 +7,6 @@ public class SessionEvent {
 
     private String userId;
     private Long minutes;
+    private boolean updateStreak;
 
 }

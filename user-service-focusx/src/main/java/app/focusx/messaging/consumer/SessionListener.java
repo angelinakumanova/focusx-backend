@@ -21,11 +21,12 @@ public class SessionListener {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = "session-events", groupId = "session-service")
+    @KafkaListener(topics = "session-events", groupId = "user-service")
     public void listen(ConsumerRecord<String, String> record) {
         try {
             SessionEvent event = objectMapper.readValue(record.value(), SessionEvent.class);
-            userService.incrementStreak(event.getUserId());
+            if (event.isUpdateStreak()) userService.incrementStreak(event.getUserId());
+
         } catch (JsonProcessingException e) {
             log.error("Error parsing session event", e);
         }

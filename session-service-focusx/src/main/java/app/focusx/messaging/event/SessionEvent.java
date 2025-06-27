@@ -6,9 +6,11 @@ import lombok.Data;
 public class SessionEvent {
     private String userId;
     private Long minutes;
+    private boolean updateStreak;
 
-    public SessionEvent(String userId, Long minutes) {
+    public SessionEvent(String userId, Long minutes, boolean updateStreak) {
         this.userId = userId;
         this.minutes = minutes;
+        this.updateStreak = updateStreak;
     }
 }

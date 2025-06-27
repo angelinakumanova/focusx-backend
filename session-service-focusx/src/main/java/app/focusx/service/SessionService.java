@@ -32,8 +32,11 @@ public class SessionService {
         sessionRepository.save(initializeSession(request));
     }
 
-    @Cacheable(value = "duration", key = "#userId")
+//    @Cacheable(value = "duration", key = "#userId")
     public long getTodaysDuration(String userId, String userTimeZone) {
+        List<Session> sessions = getTodaysSessions(userId, userTimeZone);
+
+
         return getTodaysSessions(userId, userTimeZone)
                 .stream()
                 .map(Session::getMinutes)
@@ -41,13 +44,9 @@ public class SessionService {
     }
 
     private void sendNewSessionEvent(String userId, long minutes, String timezone) {
+        boolean updateStreak = getTodaysSessions(userId, timezone).isEmpty();
 
-
-        if (!getTodaysSessions(userId, timezone).isEmpty()) {
-            return;
-        }
-
-        producer.sendNewSessionAddedEvent(userId, minutes);
+        producer.sendNewSessionAddedEvent(userId, minutes, updateStreak);
     }
 
     private List<Session> getTodaysSessions(String userId, String userTimeZone) {
