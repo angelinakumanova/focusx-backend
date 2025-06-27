@@ -36,13 +36,36 @@ public class GoalService {
         goalRepository.deleteById(goalId);
     }
 
+
     @Transactional
-    public void addMinutesToGoals(String userId, Long minutes) {
+    public void updateGoals(String userId, Long minutes, boolean updateStreak) {
+        addMinutesToGoals(userId, minutes);
+
+        if (updateStreak) updateStreakGoal(userId);
+    }
+
+    private void updateStreakGoal(String userId) {
+        List<Goal> goals = goalRepository.getByUserIdAndTypeAndIsCompleted(userId, GoalType.STREAK, false);
+
+        goals.forEach(goal -> {
+            goal.setProgress(goal.getProgress() + 1);
+
+            if (goal.getProgress() == goal.getDays()) {
+                goal.setCompleted(true);
+            }
+
+            goalRepository.save(goal);
+        });
+
+
+    }
+
+    private void addMinutesToGoals(String userId, Long minutes) {
         List<Goal> goals = goalRepository.getByUserIdAndTypeAndIsCompleted(userId, GoalType.SESSION, false);
 
         goals.forEach(goal -> {
             goal.setProgress(goal.getProgress() + minutes);
-            if (goal.getProgress() == goal.getDuration()) {
+            if (goal.getProgress() == (goal.getDuration() * goal.getSets())) {
                 goal.setCompleted(true);
             }
 

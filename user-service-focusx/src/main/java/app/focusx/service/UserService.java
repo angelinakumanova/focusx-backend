@@ -169,7 +169,7 @@ public class UserService implements UserDetailsService {
     public long incrementStreak(String id) {
         User user = getById(UUID.fromString(id));
         user.setStreak(user.getStreak() + 1);
-        user.setLastUpdatedStreak(LocalDateTime.now(ZoneOffset.UTC));
+        user.setLastUpdatedStreak(Instant.now());
 
         return userRepository.save(user).getStreak();
     }

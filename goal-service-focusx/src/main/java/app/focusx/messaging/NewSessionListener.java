@@ -25,7 +25,7 @@ public class NewSessionListener {
     public void listen(ConsumerRecord<String, String> record) {
         try {
             SessionEvent event = objectMapper.readValue(record.value(), SessionEvent.class);
-            goalService.addMinutesToGoals(event.getUserId(), event.getMinutes());
+            goalService.updateGoals(event.getUserId(), event.getMinutes(), event.isUpdateStreak());
         } catch (JsonProcessingException e) {
             log.error("Error parsing session event", e);
         }

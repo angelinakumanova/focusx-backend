@@ -6,6 +6,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Document
@@ -28,7 +29,7 @@ public class User {
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
     private long streak;
-    private LocalDateTime lastUpdatedStreak;
+    private Instant lastUpdatedStreak;
 
 
 }
