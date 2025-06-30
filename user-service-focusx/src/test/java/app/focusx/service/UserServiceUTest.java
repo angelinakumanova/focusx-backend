@@ -3,7 +3,10 @@ package app.focusx.service;
 import app.focusx.exception.PasswordUpdateException;
 import app.focusx.exception.UsernameUpdateException;
 import app.focusx.model.User;
+import app.focusx.model.UserRole;
 import app.focusx.repository.UserRepository;
+import app.focusx.security.AuthenticationMetadata;
+import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
 import app.focusx.web.dto.UserResponse;
 import org.junit.jupiter.api.Test;
@@ -14,6 +17,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.Instant;
@@ -41,7 +47,40 @@ public class UserServiceUTest {
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     @Captor
-    ArgumentCaptor<User> userCaptor;
+    private ArgumentCaptor<User> userCaptor;
+
+    @Test
+    void givenHappyPath_whenLoadUserByUsername() {
+        String username = "test";
+
+        User user = User.builder()
+                .id(UUID.randomUUID().toString())
+                .username(username)
+                .password(encoder.encode("test"))
+                .role(UserRole.USER)
+                .isActive(true)
+                .build();
+
+        when(userRepository.findByUsernameAndIsActive(username, true)).thenReturn(Optional.of(user));
+
+        AuthenticationMetadata principal = (AuthenticationMetadata) userService.loadUserByUsername(username);
+
+        assertThat(principal).isNotNull();
+        assertThat(principal.getUserId().toString()).isEqualTo(user.getId());
+        assertThat(principal.getUsername()).isEqualTo(user.getUsername());
+        assertThat(principal.getPassword()).isEqualTo(user.getPassword());
+        assertThat(principal.getRole()).isEqualTo(user.getRole());
+        assertThat(principal.isActive()).isEqualTo(user.isActive());
+
+
+    }
+
+    @Test
+    void givenNonExistingUserUsername_whenLoadUserByUsername_thenThrowsException() {
+        when(userRepository.findByUsernameAndIsActive(any(String.class), any(boolean.class))).thenReturn(Optional.empty());
+
+        assertThrows(UsernameNotFoundException.class, () -> userService.loadUserByUsername("test"));
+    }
 
     @Test
     void givenHappyPath_whenRegister() {
@@ -65,19 +104,47 @@ public class UserServiceUTest {
 
     }
 
-//    @Test
-//    void givenHappyPath_whenVerify() {
-//        LoginRequest request = new LoginRequest();
-//        request.setUsername("test");
-//        request.setPassword("123456test@T");
-//
-//        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
-//        UUID id = UUID.randomUUID();
-//
-//        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
-//        when(authentication.getPrincipal()).thenReturn(new AuthenticationMetadata(id, request.getUsername(), request.getPassword(), UserRole.USER, true));
-//
-//    }
+    @Test
+    void givenValidCredentials_whenVerify_thenReturnUser() {
+        // Given
+        LoginRequest request = new LoginRequest();
+        request.setUsername("testuser");
+        request.setPassword("securePassword");
+
+        UUID userId = UUID.randomUUID();
+
+
+        AuthenticationMetadata metadata = new AuthenticationMetadata(
+                userId,
+                request.getUsername(),
+                encoder.encode(request.getPassword()),
+                UserRole.USER,
+                true);
+        Authentication authentication = mock(Authentication.class);
+
+        User expectedUser = User.builder().id(userId.toString()).username(request.getUsername()).build();
+
+        when(authentication.getPrincipal()).thenReturn(metadata);
+        when(authenticationManager.authenticate(any())).thenReturn(authentication);
+        when(userRepository.getUserById(userId.toString())).thenReturn(Optional.of(expectedUser));
+
+        // When
+        User result = userService.verify(request);
+
+        // Then
+        assertThat(result).isEqualTo(expectedUser);
+
+        verify(authenticationManager).authenticate(
+                argThat(token ->
+                        token instanceof UsernamePasswordAuthenticationToken &&
+                                token.getPrincipal().equals("testuser") &&
+                                token.getCredentials().equals("securePassword")
+                )
+        );
+
+        verify(userRepository).getUserById(userId.toString());
+    }
+
 
     @Test
     void givenHappyPath_whenUpdateUsername() {
