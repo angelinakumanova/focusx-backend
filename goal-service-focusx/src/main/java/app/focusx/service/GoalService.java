@@ -87,14 +87,14 @@ public class GoalService {
 
            goal.setSets(request.getSets());
            goal.setDuration(request.getDuration());
-           return goalRepository.save(goal);
+           return goal;
         } else if (request.getType() == GoalType.STREAK) {
           
             goal.setDays(request.getDays());
-            return goalRepository.save(goal);
+            return goal;
         }
-        throw new IllegalArgumentException("Unsupported type " + request.getType());
 
+        throw new IllegalArgumentException("Unsupported type " + request.getType());
     }
 
 

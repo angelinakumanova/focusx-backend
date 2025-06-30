@@ -3,6 +3,7 @@ package app.focusx.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
@@ -20,6 +21,7 @@ public class RsaKeyConfig {
     @Value("${jwt.public-key}")
     private String publicKey;
 
+    @Profile("!test")
     @Bean
     public RSAPrivateKey rsaPrivateKey() throws Exception {
         String key = privateKey.replace("-----BEGIN PRIVATE KEY-----", "")
@@ -34,6 +36,7 @@ public class RsaKeyConfig {
         return (RSAPrivateKey) kf.generatePrivate(spec);
     }
 
+    @Profile("!test")
     @Bean
     public RSAPublicKey rsaPublicKey() throws Exception {
         String key = publicKey.replace("-----BEGIN PUBLIC KEY-----", "")

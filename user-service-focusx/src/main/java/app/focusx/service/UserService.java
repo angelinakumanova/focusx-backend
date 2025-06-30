@@ -176,7 +176,7 @@ public class UserService implements UserDetailsService {
 
     private long validateStreak(String id, String timezone) {
         User user = getById(UUID.fromString(id));
-        Instant lastUpdatedStreak = user.getLastUpdatedStreak().atZone(ZoneOffset.UTC).toInstant();
+        Instant lastUpdatedStreak = user.getLastUpdatedStreak();
 
         if (lastUpdatedStreak != null) {
             ZoneId userZone = ZoneId.of(timezone);
