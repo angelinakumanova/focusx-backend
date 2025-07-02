@@ -19,13 +19,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import static app.focusx.util.CookieUtils.clearAuthCookies;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig {
+public class SecurityConfig implements WebMvcConfigurer {
 
     private final UserService userService;
 
@@ -46,7 +47,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-//                .logout(logout -> logout.logoutUrl("/api/auth/logout")
+                .logout(AbstractHttpConfigurer::disable)
 //                        .deleteCookies("access_token", "refresh_token")
 //                        .logoutSuccessHandler((request, response, auth) -> {
 //                            clearAuthCookies(response);

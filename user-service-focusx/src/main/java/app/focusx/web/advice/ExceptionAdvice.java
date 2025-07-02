@@ -33,16 +33,16 @@ public class ExceptionAdvice {
     }
 
     @ExceptionHandler({UsernameUpdateException.class, PasswordUpdateException.class})
-    public ResponseEntity<ErrorResponse> handleUsernameUpdateException(Exception ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleUserUpdateExceptions(Exception ex, HttpServletRequest request) {
         ErrorResponse error = ErrorResponse.builder()
-                .status(401)
+                .status(400)
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
-                .error("Unauthorized")
+                .error("Bad Request")
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

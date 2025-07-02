@@ -13,6 +13,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 @Configuration
+@Profile("!test")
 public class RsaKeyConfig {
 
     @Value("${jwt.private-key}")
@@ -21,7 +22,6 @@ public class RsaKeyConfig {
     @Value("${jwt.public-key}")
     private String publicKey;
 
-    @Profile("!test")
     @Bean
     public RSAPrivateKey rsaPrivateKey() throws Exception {
         String key = privateKey.replace("-----BEGIN PRIVATE KEY-----", "")
@@ -36,7 +36,6 @@ public class RsaKeyConfig {
         return (RSAPrivateKey) kf.generatePrivate(spec);
     }
 
-    @Profile("!test")
     @Bean
     public RSAPublicKey rsaPublicKey() throws Exception {
         String key = publicKey.replace("-----BEGIN PUBLIC KEY-----", "")

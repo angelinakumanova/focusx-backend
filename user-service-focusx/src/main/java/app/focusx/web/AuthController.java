@@ -77,8 +77,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me(@CookieValue(value = "access_token") String accessToken) {
-
+    public ResponseEntity<?> me(@CookieValue(value = "access_token", required = false) String accessToken) {
 
         if (accessToken != null) {
             String userId = jwtService.extractUserId(accessToken);
