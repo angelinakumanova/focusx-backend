@@ -4,6 +4,7 @@ import app.focusx.service.UserService;
 import app.focusx.util.CookieUtils;
 import app.focusx.web.dto.PasswordUpdateRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +26,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}/password")
-    public ResponseEntity<?> updatePassword(@PathVariable String id, @RequestBody PasswordUpdateRequest request) {
+    public ResponseEntity<?> updatePassword(@PathVariable String id, @RequestBody @Valid PasswordUpdateRequest request) {
         userService.updatePassword(id, request.getCurrentPassword(), request.getNewPassword());
 
         return ResponseEntity.ok().build();
