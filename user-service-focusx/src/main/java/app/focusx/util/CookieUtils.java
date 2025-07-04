@@ -35,7 +35,7 @@ public class CookieUtils {
             Duration maxAge
     ) {
         return ResponseCookie.from(name, value)
-//                .domain(DOMAIN_NAME)
+                .domain(DOMAIN_NAME)
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
