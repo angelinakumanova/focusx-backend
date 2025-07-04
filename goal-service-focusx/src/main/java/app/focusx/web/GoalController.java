@@ -4,6 +4,7 @@ import app.focusx.service.GoalService;
 import app.focusx.web.dto.CreateGoalRequest;
 import app.focusx.web.dto.GoalResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,8 +20,10 @@ public class GoalController {
     }
 
     @PostMapping("/{userId}")
-    public void createGoal(@PathVariable String userId, @Valid @RequestBody CreateGoalRequest request) {
+    public ResponseEntity<?> createGoal(@PathVariable String userId, @Valid @RequestBody CreateGoalRequest request) {
         goalService.create(userId, request);
+
+        return ResponseEntity.status(201).build();
     }
 
     @GetMapping("/{userId}")
