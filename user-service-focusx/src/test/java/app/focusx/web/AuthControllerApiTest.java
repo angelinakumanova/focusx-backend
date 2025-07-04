@@ -3,7 +3,6 @@ package app.focusx.web;
 import app.focusx.MockUtils;
 import app.focusx.model.User;
 import app.focusx.model.UserRole;
-import app.focusx.security.AuthenticationMetadata;
 import app.focusx.security.JwtService;
 import app.focusx.service.UserService;
 import app.focusx.web.dto.LoginRequest;
