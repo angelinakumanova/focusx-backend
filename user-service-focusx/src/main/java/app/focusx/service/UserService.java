@@ -6,10 +6,14 @@ import app.focusx.model.User;
 import app.focusx.model.UserRole;
 import app.focusx.repository.UserRepository;
 import app.focusx.security.AuthenticationMetadata;
+import app.focusx.validation.UniqueUsername;
 import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
 import app.focusx.web.dto.UserResponse;
 import app.focusx.web.mapper.DtoMapper;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -72,14 +76,8 @@ public class UserService implements UserDetailsService {
     public void updateUsername(String userId, String username) {
         User user = findById(UUID.fromString(userId));
 
-
         if (user.getUsername().equals(username)) {
             throw new UsernameUpdateException("This is already your username.");
-        }
-
-        Optional<User> existingUser = userRepository.getUserByUsername(username);
-        if (existingUser.isPresent()) {
-            throw new UsernameUpdateException("Username is already taken!");
         }
 
         if (user.getLastModifiedUsername() != null && user.getLastModifiedUsername().plusDays(30).isAfter(LocalDateTime.now())) {

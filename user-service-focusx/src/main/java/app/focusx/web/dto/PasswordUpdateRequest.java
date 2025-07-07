@@ -7,8 +7,6 @@ import lombok.Data;
 
 @Data
 public class PasswordUpdateRequest {
-
-
     private String currentPassword;
 
     @NotEmpty

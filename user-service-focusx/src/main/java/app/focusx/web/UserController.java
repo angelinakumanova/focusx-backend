@@ -3,6 +3,7 @@ package app.focusx.web;
 import app.focusx.service.UserService;
 import app.focusx.util.CookieUtils;
 import app.focusx.web.dto.PasswordUpdateRequest;
+import app.focusx.web.dto.UsernameUpdateRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +19,9 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PutMapping("/{id}/{username}")
-    public ResponseEntity<?> updateUsername(@PathVariable String id, @PathVariable String username) {
-        userService.updateUsername(id, username);
+    @PutMapping("/{id}/username")
+    public ResponseEntity<?> updateUsername(@PathVariable String id, @Valid @RequestBody UsernameUpdateRequest request) {
+        userService.updateUsername(id, request.getUsername());
 
         return ResponseEntity.ok().build();
     }
