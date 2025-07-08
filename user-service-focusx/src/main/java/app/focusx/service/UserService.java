@@ -1,6 +1,7 @@
 package app.focusx.service;
 
 import app.focusx.exception.PasswordUpdateException;
+import app.focusx.exception.UserNotFoundException;
 import app.focusx.exception.UsernameUpdateException;
 import app.focusx.model.User;
 import app.focusx.model.UserRole;
@@ -196,7 +197,7 @@ public class UserService implements UserDetailsService {
         Optional<User> optionalUser = userRepository.getUserById(userId.toString());
 
         if (optionalUser.isEmpty()) {
-            throw new UsernameUpdateException("User not found");
+            throw new UserNotFoundException("User not found");
         }
 
         return optionalUser.get();

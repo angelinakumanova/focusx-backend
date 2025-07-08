@@ -1,6 +1,7 @@
 package app.focusx.web.advice;
 
 import app.focusx.exception.PasswordUpdateException;
+import app.focusx.exception.UserNotFoundException;
 import app.focusx.exception.UsernameUpdateException;
 import app.focusx.web.dto.ErrorResponse;
 import app.focusx.web.dto.FieldError;
@@ -70,4 +71,18 @@ public class ExceptionAdvice {
                         .fieldErrors(fieldErrors)
                         .build());
     }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .error("Not Found")
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
 }
