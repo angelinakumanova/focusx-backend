@@ -5,6 +5,7 @@ import app.focusx.model.Session;
 import app.focusx.repository.SessionRepository;
 import app.focusx.web.dto.SessionCreateRequest;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
@@ -29,7 +30,7 @@ public class SessionService {
         sessionRepository.save(initializeSession(request));
     }
 
-//    @Cacheable(value = "duration", key = "#userId")
+    @Cacheable(value = "duration", key = "#userId")
     public long getTodaysDuration(String userId, String userTimeZone) {
         return getTodaysSessions(userId, userTimeZone)
                 .stream()
