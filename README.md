@@ -1,0 +1,27 @@
+# FocusX Backend
+
+## 📋 **Overview**  
+This repository contains the **backend** of **FocusX**, implemented as **three microservices** within a single repository.  
+The backend combines a Pomodoro timer, goal tracking, and rewards system, built with **Java 21**, **Spring Boot**, and **MongoDB**.  
+The microservices communicate asynchronously via **Apache Kafka** for real-time updates.
+API documentation is provided through **Swagger** for easy testing and exploration.
+
+## ✨ **Microservices**  
+- **User Service:** Handles user management and authentication (JWT).  
+- **Goal Service:** Manages goals, tracking progress, and rewards.  
+- **Session Service:** Manages Pomodoro timer sessions.
+
+## ✨ **Features**  
+- ⚙️ Microservices architecture bundled in one repo for ease of management  
+- 🗄️ MongoDB for data persistence  
+- 🔐 JWT-based authentication and authorization  
+- 📨 Apache Kafka for event-driven communication between services
+- 📚 **Swagger** UI for interactive API documentation
+
+## 🛠️ **Tech Stack**  
+- **Java 21**  
+- **Spring Boot**  
+- **MongoDB**  
+- **Apache Kafka** (Confluent Cloud)  
+- **Swagger / OpenAPI**  
+- **Docker**
