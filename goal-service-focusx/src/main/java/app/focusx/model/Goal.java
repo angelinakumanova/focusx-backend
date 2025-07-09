@@ -27,4 +27,5 @@ public class Goal {
     private long progress;
     private String reward;
     private boolean isCompleted;
+    private boolean isTracked;
 }

@@ -57,4 +57,24 @@ public class GoalController {
     public void deleteGoal(@Parameter(required = true) @PathVariable String goalId) {
         goalService.deleteById(goalId);
     }
+
+    @Operation(summary = "Update goal to tracked by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Goal updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data")
+    })
+    @PutMapping("/{goalId}/track")
+    public void trackGoal(@Parameter(required = true) @PathVariable String goalId) {
+        goalService.trackGoal(goalId);
+    }
+
+    @Operation(summary = "Get tracked goal by user Id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Goal retrieved successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data")
+    })
+    @GetMapping("/{userId}/tracking-goal")
+    public GoalResponse getGoalTrackingGoal(@Parameter(required = true) @PathVariable String userId) {
+        return goalService.getTrackingGoalByUserId(userId);
+    }
 }

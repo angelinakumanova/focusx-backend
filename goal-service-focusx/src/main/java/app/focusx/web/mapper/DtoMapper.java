@@ -16,6 +16,7 @@ public class DtoMapper {
                 .duration(goal.getDuration())
                 .days(goal.getDays())
                 .reward(goal.getReward())
+                .isTracked(goal.isTracked())
                 .progress(goal.getProgress())
                 .build();
     }

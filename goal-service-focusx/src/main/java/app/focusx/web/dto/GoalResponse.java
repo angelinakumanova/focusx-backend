@@ -15,4 +15,5 @@ public class GoalResponse {
     private long sets;
     private long duration;
     private long days;
+    private boolean isTracked;
 }

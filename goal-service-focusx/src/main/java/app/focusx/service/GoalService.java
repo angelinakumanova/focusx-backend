@@ -6,10 +6,13 @@ import app.focusx.repository.GoalRepository;
 import app.focusx.web.dto.CreateGoalRequest;
 import app.focusx.web.dto.GoalResponse;
 import app.focusx.web.mapper.DtoMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -39,9 +42,38 @@ public class GoalService {
 
     @Transactional
     public void updateGoals(String userId, Long minutes, boolean updateStreak) {
-        addMinutesToGoals(userId, minutes);
+        addMinutesToTrackedGoal(userId, minutes);
 
         if (updateStreak) updateStreakGoal(userId);
+    }
+
+    @Transactional
+    @CacheEvict(value = "tracked", allEntries = true)
+    public void trackGoal(String goalId) {
+        Optional<Goal> optionalTrackedGoal = goalRepository.findByIsTrackedTrue();
+
+        if (optionalTrackedGoal.isPresent()) {
+            Goal goal = optionalTrackedGoal.get();
+            goal.setTracked(false);
+            goalRepository.save(goal);
+        }
+
+        goalRepository.findById(goalId).ifPresent(goal -> {
+            goal.setTracked(true);
+            goalRepository.save(goal);
+        });
+    }
+
+    @Cacheable(value = "tracked", key = "#userId")
+    public GoalResponse getTrackingGoalByUserId(String userId) {
+        Optional<Goal> optionalGoal = goalRepository.findByUserIdAndIsTrackedTrue(userId);
+
+        if (optionalGoal.isPresent()) {
+            Goal goal = optionalGoal.get();
+            return DtoMapper.mapGoalToGoalResponse(goal);
+        } else {
+            return null;
+        }
     }
 
     private void updateStreakGoal(String userId) {
@@ -60,17 +92,21 @@ public class GoalService {
 
     }
 
-    private void addMinutesToGoals(String userId, Long minutes) {
-        List<Goal> goals = goalRepository.getByUserIdAndTypeAndIsCompleted(userId, GoalType.SESSION, false);
+    private void addMinutesToTrackedGoal(String userId, Long minutes) {
+        Optional<Goal> optionalGoal = goalRepository
+                .getByUserIdAndTypeAndIsCompletedAndIsTracked(userId, GoalType.SESSION, false, true);
 
-        goals.forEach(goal -> {
+        if (optionalGoal.isPresent()) {
+            Goal goal = optionalGoal.get();
+
             goal.setProgress(goal.getProgress() + minutes);
             if (goal.getProgress() == (goal.getDuration() * goal.getSets())) {
                 goal.setCompleted(true);
             }
 
             goalRepository.save(goal);
-        });
+        }
+
     }
 
     private Goal initializeGoal(String userId, CreateGoalRequest request) {
@@ -81,6 +117,7 @@ public class GoalService {
                 .type(request.getType())
                 .reward(request.getReward())
                 .isCompleted(false)
+                .isTracked(false)
                 .progress(0).build();
 
         if (request.getType() == GoalType.SESSION) {
@@ -96,6 +133,7 @@ public class GoalService {
 
         throw new IllegalArgumentException("Unsupported type " + request.getType());
     }
+
 
 
 }
