@@ -24,7 +24,7 @@ public class IpRateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
 
-        if ("/auth/register".equals(path)) {
+        if ("/api/auth/register".equals(path)) {
             String ip = request.getRemoteAddr();
 
             if (!service.isAllowed(ip)) {
