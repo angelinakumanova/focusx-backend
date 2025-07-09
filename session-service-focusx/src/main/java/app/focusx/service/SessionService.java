@@ -7,10 +7,8 @@ import app.focusx.web.dto.SessionCreateRequest;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -68,4 +66,8 @@ public class SessionService {
                 .build();
     }
 
+    public void cleanOldSessionsOlderThan1Day() {
+        Instant oneDayAgo = Instant.now().minus(1, ChronoUnit.DAYS);
+        sessionRepository.deleteByCompletedAtBefore(oneDayAgo);
+    }
 }
