@@ -48,12 +48,6 @@ public class SecurityConfig implements WebMvcConfigurer {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout(AbstractHttpConfigurer::disable)
-//                        .deleteCookies("access_token", "refresh_token")
-//                        .logoutSuccessHandler((request, response, auth) -> {
-//                            clearAuthCookies(response);
-//                            response.setStatus(HttpServletResponse.SC_OK);
-//                        })
-//                )
                 .build();
     }
 
