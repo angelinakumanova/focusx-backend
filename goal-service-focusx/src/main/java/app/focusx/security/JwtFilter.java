@@ -42,28 +42,29 @@ public class JwtFilter extends OncePerRequestFilter {
 
         }
 
-        if (jwt != null) {
-
-
-            try {
-                Claims claims = validator.validateToken(jwt);
-                GrantedAuthority role = new SimpleGrantedAuthority(claims.get("role").toString());
-
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        claims.getSubject(),
-                        null,
-                        List.of(role)
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(auth);
-
-            } catch (JwtException e) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT");
-                return;
-            }
-
-            filterChain.doFilter(request, response);
+        if (jwt == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
+
+        try {
+            Claims claims = validator.validateToken(jwt);
+            GrantedAuthority role = new SimpleGrantedAuthority(claims.get("role").toString());
+
+            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                    claims.getSubject(),
+                    null,
+                    List.of(role)
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(auth);
+
+        } catch (JwtException e) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT");
+            return;
+        }
+
+        filterChain.doFilter(request, response);
 
     }
 }

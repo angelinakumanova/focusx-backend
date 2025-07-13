@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -131,32 +132,22 @@ public class GoalServiceUTest {
         long minutes = 20L;
         boolean updateStreak = true;
 
-        Goal goal1 = Goal.builder()
+        Goal goal = Goal.builder()
                 .id(UUID.randomUUID().toString())
                 .type(GoalType.SESSION)
                 .duration(10)
                 .sets(2)
                 .isCompleted(false)
+                .isTracked(true)
                 .progress(0)
                 .build();
 
 
-        Goal goal2 = Goal.builder()
-                .id(UUID.randomUUID().toString())
-                .type(GoalType.STREAK)
-                .days(2)
-                .isCompleted(false)
-                .progress(0)
-                .build();
-
-        when(goalRepository.getByUserIdAndTypeAndIsCompleted(userId.toString(), GoalType.SESSION, false)).thenReturn(List.of(goal1));
-        when(goalRepository.getByUserIdAndTypeAndIsCompleted(userId.toString(), GoalType.STREAK, false)).thenReturn(List.of(goal2));
+        when(goalRepository.getByUserIdAndTypeAndIsCompletedAndIsTracked(userId.toString(), GoalType.SESSION, false, true)).thenReturn(Optional.of(goal));
 
         goalService.updateGoals(userId.toString(), minutes, updateStreak);
 
-        assertThat(goal1.getProgress()).isEqualTo(20);
-        assertThat(goal2.getProgress()).isEqualTo(1);
-        assertThat(goal1.isCompleted()).isTrue();
-        assertThat(goal2.isCompleted()).isFalse();
+        assertThat(goal.getProgress()).isEqualTo(20);
+        assertThat(goal.isCompleted()).isTrue();
     }
 }

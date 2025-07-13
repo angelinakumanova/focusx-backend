@@ -184,7 +184,7 @@ public class UserService implements UserDetailsService {
 
             ZonedDateTime startOfToday = ZonedDateTime.now(userZone).toLocalDate().atStartOfDay(userZone);
 
-            if (lastUpdatedZoned.isBefore(startOfToday)) {
+            if (lastUpdatedZoned.isBefore(startOfToday.minusDays(2))) {
                 user.setStreak(0);
                 return userRepository.save(user).getStreak();
             }

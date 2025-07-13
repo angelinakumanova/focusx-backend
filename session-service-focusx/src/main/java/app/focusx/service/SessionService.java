@@ -24,13 +24,13 @@ public class SessionService {
         this.producer = producer;
     }
 
-    @CacheEvict(value ="duration", key = "#request.userId")
+//    @CacheEvict(value ="duration", key = "#request.userId")
     public void add(SessionCreateRequest request) {
         sendNewSessionEvent(request.getUserId(), request.getMinutes(), request.getUserTimezone());
         sessionRepository.save(initializeSession(request));
     }
 
-    @Cacheable(value = "duration", key = "#userId")
+//    @Cacheable(value = "duration", key = "#userId")
     public long getTodaysDuration(String userId, String userTimeZone) {
         return getTodaysSessions(userId, userTimeZone)
                 .stream()
