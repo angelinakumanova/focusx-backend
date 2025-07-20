@@ -7,16 +7,14 @@ import app.focusx.model.User;
 import app.focusx.model.UserRole;
 import app.focusx.repository.UserRepository;
 import app.focusx.security.AuthenticationMetadata;
-import app.focusx.validation.UniqueUsername;
 import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
 import app.focusx.web.dto.UserResponse;
 import app.focusx.web.mapper.DtoMapper;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,9 +26,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -40,10 +40,12 @@ public class UserService implements UserDetailsService {
     private final AuthenticationManager authenticationManager;
 
     private final BCryptPasswordEncoder encoder;
+    private final RedisTemplate<String, String> redisTemplate;
 
-    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager) {
+    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager, RedisTemplate<String, String> redisTemplate) {
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
+        this.redisTemplate = redisTemplate;
         this.encoder = new BCryptPasswordEncoder(12);
     }
 
@@ -110,6 +112,7 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
     }
 
+    @CacheEvict(value = "users", key = "#userId")
     public void deactivate(String userId) {
         User user = findById(UUID.fromString(userId));
 
@@ -159,12 +162,11 @@ public class UserService implements UserDetailsService {
     }
 
 
-//    @Cacheable(value = "streaks", key = "#id")
     public long getStreak(String id, String timezone) {
         return validateStreak(id, timezone);
     }
 
-//    @CachePut(value = "streaks", key = "#id")
+    @CacheEvict(value = "streaks", key = "#id")
     public long incrementStreak(String id) {
         User user = getById(UUID.fromString(id));
         user.setStreak(user.getStreak() + 1);
@@ -174,6 +176,13 @@ public class UserService implements UserDetailsService {
     }
 
     private long validateStreak(String id, String timezone) {
+        String key = "streaks::" + id;
+        String value = redisTemplate.opsForValue().get(key);
+
+        if (value != null) {
+            return Long.parseLong(value);
+        }
+
         User user = getById(UUID.fromString(id));
         Instant lastUpdatedStreak = user.getLastUpdatedStreak();
 
@@ -186,11 +195,24 @@ public class UserService implements UserDetailsService {
 
             if (lastUpdatedZoned.isBefore(startOfToday.minusDays(2))) {
                 user.setStreak(0);
-                return userRepository.save(user).getStreak();
+                userRepository.save(user);
             }
         }
 
+        cacheWithCustomTTL(id, user.getStreak(), timezone);
         return user.getStreak();
+    }
+
+    private void cacheWithCustomTTL(String userId, Long streak, String timezone) {
+        ZoneId zone = ZoneId.of(timezone);
+
+        ZonedDateTime now = ZonedDateTime.now(zone);
+        ZonedDateTime nextMidnight = now.plusDays(1).truncatedTo(ChronoUnit.DAYS);
+
+        long diff = Duration.between(now, nextMidnight).toMillis();
+        String key = "streaks::" + userId;
+
+        redisTemplate.opsForValue().set(key, streak.toString(), diff, TimeUnit.MILLISECONDS);
     }
 
     private User findById(UUID userId) {

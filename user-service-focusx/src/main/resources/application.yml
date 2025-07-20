@@ -5,6 +5,10 @@ spring:
     mongodb:
       uri: ${MONGO_URI}
       database: ${MONGO_DB_NAME}
+    redis:
+      host: ${REDIS_ENDPOINT}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
   kafka:
     bootstrap-servers: pkc-75m1o.europe-west3.gcp.confluent.cloud:9092
     properties:
@@ -20,6 +24,9 @@ spring:
       session:
         timeout:
           ms: 45000
+  cache:
+    type: redis
+
 
 jwt:
   private-key: ${JWT_PRIVATE_KEY}
