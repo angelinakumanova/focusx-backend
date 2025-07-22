@@ -13,7 +13,8 @@ API documentation is provided through **Swagger** for easy testing and explorati
 
 ## ✨ **Features**  
 - ⚙️ Microservices architecture bundled in one repo for ease of management  
-- 🗄️ MongoDB for data persistence  
+- 🗄️ MongoDB for data persistence
+- 💾 Redis for fast in-memory caching for performance optimization
 - 🔐 JWT-based authentication and authorization  
 - 📨 Apache Kafka for event-driven communication between services
 - 📚 **Swagger** UI for interactive API documentation
@@ -21,7 +22,9 @@ API documentation is provided through **Swagger** for easy testing and explorati
 ## 🛠️ **Tech Stack**  
 - **Java 21**  
 - **Spring Boot**  
-- **MongoDB**  
+- **MongoDB**
+- **Redis**
 - **Apache Kafka** (Confluent Cloud)  
 - **Swagger / OpenAPI**  
 - **Docker**
+
