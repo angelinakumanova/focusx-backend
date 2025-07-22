@@ -32,3 +32,9 @@ server:
 
 client:
   id: ccloud-springboot-client-96a8c99e-2a1c-4b8c-90d2-d416052cb768
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}

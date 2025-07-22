@@ -42,3 +42,9 @@ server:
 
 jwt:
   public-key: ${JWT_PUBLIC_KEY}
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
