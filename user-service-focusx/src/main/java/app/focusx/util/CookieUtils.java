@@ -7,18 +7,20 @@ import org.springframework.http.ResponseCookie;
 import java.time.Duration;
 
 public class CookieUtils {
-    private static final String DOMAIN_NAME = "onrender.com";
+    private static final String DOMAIN_NAME = ".onrender.com";
 
     public static void clearAuthCookies(HttpServletResponse response) {
+        String modifiedDomainName = DOMAIN_NAME.replaceFirst(".", "");
+
         Cookie accessTokenCookie = new Cookie("access_token", null);
-        accessTokenCookie.setDomain(DOMAIN_NAME);
+        accessTokenCookie.setDomain(modifiedDomainName);
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge(0);
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", null);
-        refreshTokenCookie.setDomain(DOMAIN_NAME);
+        refreshTokenCookie.setDomain(modifiedDomainName);
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
