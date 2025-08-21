@@ -7,17 +7,18 @@ import org.springframework.http.ResponseCookie;
 import java.time.Duration;
 
 public class CookieUtils {
+    private static final String DOMAIN_NAME = "onrender.com";
 
     public static void clearAuthCookies(HttpServletResponse response) {
         Cookie accessTokenCookie = new Cookie("access_token", null);
-        accessTokenCookie.setDomain("up.railway.app");
+        accessTokenCookie.setDomain(DOMAIN_NAME);
         accessTokenCookie.setHttpOnly(true);
         accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge(0);
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", null);
-        refreshTokenCookie.setDomain("up.railway.app");
+        refreshTokenCookie.setDomain(DOMAIN_NAME);
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
@@ -34,6 +35,7 @@ public class CookieUtils {
             Duration maxAge
     ) {
         return ResponseCookie.from(name, value)
+                .domain(DOMAIN_NAME)
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
