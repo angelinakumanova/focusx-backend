@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -44,9 +45,9 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(
             summary = "Authenticate a user",
-            description = "Verifies user credentials and sets access and refresh token cookies.",
+            description = "Verifies user credentials and sets access and refresh token.",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Login successful, cookies set"),
+                    @ApiResponse(responseCode = "200", description = "Login successful, tokens set"),
                     @ApiResponse(responseCode = "401", description = "Invalid username or password")
             }
     )
@@ -57,14 +58,18 @@ public class AuthController {
         String refreshToken = jwtService.generateRefreshToken(UUID.fromString(user.getId()), user.getRole().toString());
 
 
-        ResponseCookie accessTokenCookie = CookieUtils.buildResponseCookie("access_token", accessToken, Duration.ofMinutes(15));
-        ResponseCookie refreshTokenCookie = CookieUtils.buildResponseCookie("refresh_token", refreshToken, Duration.ofDays(7));
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(Duration.ofDays(7))
+                .sameSite("Strict")
+                .build();
 
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
-                .build();
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(Map.of("access_token", accessToken));
     }
 
     @PostMapping("/refresh")
@@ -86,11 +91,8 @@ public class AuthController {
 
                 String newAccessToken = jwtService.generateAccessToken(UUID.fromString(user.getId()), user.getRole().toString());
 
-                ResponseCookie accessCookie = CookieUtils.buildResponseCookie("access_token", newAccessToken, Duration.ofMinutes(15));
-
                 return ResponseEntity.ok()
-                        .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
-                        .build();
+                        .body(Map.of("access_token", newAccessToken));
             }
         }
 
@@ -101,16 +103,17 @@ public class AuthController {
     @GetMapping("/me")
     @Operation(
             summary = "Get current user info",
-            description = "Returns user info based on access token in cookie.",
+            description = "Returns user info based on access token in authorization header.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "User info retrieved successfully"),
                     @ApiResponse(responseCode = "401", description = "Access token is missing or invalid")
             }
     )
-    public ResponseEntity<?> me(@CookieValue(value = "access_token", required = false) String accessToken) {
+    public ResponseEntity<?> me(@RequestHeader(value = "Authorization", required = false) String accessToken) {
 
         if (accessToken != null) {
-            String userId = jwtService.extractUserId(accessToken);
+            String token = accessToken.substring("Bearer ".length());
+            String userId = jwtService.extractUserId(token);
 
             if (userId != null) {
                 UserResponse userResponse = userService.getInfo(UUID.fromString(userId));
