@@ -2,16 +2,19 @@ package app.focusx.util;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseCookie;
 
 public class CookieUtils {
 
     public static void clearAuthCookies(HttpServletResponse response) {
-        Cookie refreshTokenCookie = new Cookie("refresh_token", null);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true);
-        refreshTokenCookie.setPath("/api/auth/refresh");
-        refreshTokenCookie.setMaxAge(0);
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/auth/refresh")
+                .sameSite("None")
+                .maxAge(0)
+                .build();
 
-        response.addCookie(refreshTokenCookie);
+        response.addHeader("Set-Cookie", refreshCookie.toString());
     }
 }
