@@ -36,16 +36,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        Cookie[] cookies = request.getCookies();
         String jwt = null;
 
-        if (cookies != null) {
-            jwt = Arrays.stream(cookies)
-                    .filter(c -> "access_token".equals(c.getName()))
-                    .map(Cookie::getValue)
-                    .findFirst()
-                    .orElse(null);
-
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
         }
 
         if (jwt == null) {
