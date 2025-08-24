@@ -9,7 +9,7 @@ public class CookieUtils {
         Cookie refreshTokenCookie = new Cookie("refresh_token", null);
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true);
-        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setPath("/api/auth/refresh");
         refreshTokenCookie.setMaxAge(0);
 
         response.addCookie(refreshTokenCookie);
