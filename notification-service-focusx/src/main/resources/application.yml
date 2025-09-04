@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: notification-service-focusx
+
+  data:
+    cache:
+      type: redis
+
+    mongodb:
+      uri: ${MONGO_URI}
+      database: ${MONGO_DB_NAME}
+    redis:
+      host: ${REDIS_ENDPOINT}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+
+
+    kafka:
+      bootstrap-servers: pkc-75m1o.europe-west3.gcp.confluent.cloud:9092
+      properties:
+        sasl:
+          mechanism: PLAIN
+          jaas:
+            config: >
+              org.apache.kafka.common.security.plain.PlainLoginModule required
+              username='${KAFKA_API_KEY}'
+              password='${KAFKA_API_SECRET}';
+        security:
+          protocol: SASL_SSL
+        session:
+          timeout:
+            ms: 45000
+
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8083
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+
+client:
+  id: ccloud-springboot-client-96a8c99e-2a1c-4b8c-90d2-d416052cb768
