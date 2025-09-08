@@ -1,6 +1,6 @@
 package app.focusx.service;
 
-import app.focusx.messaging.producer.SessionEventProducer;
+import app.focusx.messaging.producer.NewSessionEventProducer;
 import app.focusx.model.Session;
 import app.focusx.repository.SessionRepository;
 import app.focusx.web.dto.SessionCreateRequest;
@@ -30,7 +30,7 @@ public class SessionServiceUTest {
     private SessionRepository sessionRepository;
 
     @Mock
-    private SessionEventProducer producer;
+    private NewSessionEventProducer producer;
 
     @Captor
     ArgumentCaptor<Session> sessionCaptor;

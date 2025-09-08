@@ -1,6 +1,6 @@
 package app.focusx.service;
 
-import app.focusx.messaging.producer.SessionEventProducer;
+import app.focusx.messaging.producer.NewSessionEventProducer;
 import app.focusx.model.Session;
 import app.focusx.repository.SessionRepository;
 import app.focusx.web.dto.SessionCreateRequest;
@@ -18,11 +18,11 @@ import java.util.concurrent.TimeUnit;
 public class SessionService {
 
     private final SessionRepository sessionRepository;
-    private final SessionEventProducer producer;
+    private final NewSessionEventProducer producer;
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    public SessionService(SessionRepository sessionRepository, SessionEventProducer producer, RedisTemplate<String, String> redisTemplate) {
+    public SessionService(SessionRepository sessionRepository, NewSessionEventProducer producer, RedisTemplate<String, String> redisTemplate) {
         this.sessionRepository = sessionRepository;
         this.producer = producer;
         this.redisTemplate = redisTemplate;

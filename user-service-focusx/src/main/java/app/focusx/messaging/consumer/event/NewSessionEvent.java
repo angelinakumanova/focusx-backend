@@ -3,7 +3,7 @@ package app.focusx.messaging.consumer.event;
 import lombok.Data;
 
 @Data
-public class SessionEvent {
+public class NewSessionEvent {
 
     private String userId;
     private Long minutes;

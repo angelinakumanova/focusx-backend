@@ -21,13 +21,13 @@ public class NewSessionListener {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = "session-events", groupId = "goal-service")
+    @KafkaListener(topics = "new-session-event", groupId = "goal-service")
     public void listen(ConsumerRecord<String, String> record) {
         try {
             SessionEvent event = objectMapper.readValue(record.value(), SessionEvent.class);
             goalService.updateGoals(event.getUserId(), event.getMinutes(), event.isUpdateStreak());
-        } catch (JsonProcessingException e) {
-            log.error("Error parsing session event", e);
+        } catch (Exception e) {
+            log.error("Error handling new session event", e);
         }
     }
 }
