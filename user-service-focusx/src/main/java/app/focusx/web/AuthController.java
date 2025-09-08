@@ -56,6 +56,7 @@ public class AuthController {
         return buildAuthResponse(user);
     }
 
+
     @PostMapping("/login")
     @Operation(
             summary = "Authenticate a user",

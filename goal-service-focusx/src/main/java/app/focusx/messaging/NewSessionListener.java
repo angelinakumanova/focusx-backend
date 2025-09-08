@@ -2,7 +2,6 @@ package app.focusx.messaging;
 
 import app.focusx.messaging.event.SessionEvent;
 import app.focusx.service.GoalService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
