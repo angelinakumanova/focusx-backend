@@ -1,4 +1,4 @@
-package app.focusx.messaging.event;
+package app.focusx.messaging.consumer.event;
 
 import lombok.Data;
 

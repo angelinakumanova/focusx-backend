@@ -12,6 +12,7 @@ spring:
   kafka:
     bootstrap-servers: pkc-75m1o.europe-west3.gcp.confluent.cloud:9092
     properties:
+      group-id: user-service
       sasl:
         mechanism: PLAIN
         jaas:

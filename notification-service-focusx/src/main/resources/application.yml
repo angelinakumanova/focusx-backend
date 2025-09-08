@@ -3,9 +3,6 @@ spring:
     name: notification-service-focusx
 
   data:
-    cache:
-      type: redis
-
     mongodb:
       uri: ${MONGO_URI}
       database: ${MONGO_DB_NAME}
@@ -14,22 +11,26 @@ spring:
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
 
+  cache:
+    type: redis
 
-    kafka:
-      bootstrap-servers: pkc-75m1o.europe-west3.gcp.confluent.cloud:9092
-      properties:
-        sasl:
-          mechanism: PLAIN
-          jaas:
-            config: >
+
+  kafka:
+    bootstrap-servers: pkc-75m1o.europe-west3.gcp.confluent.cloud:9092
+    properties:
+      group-id: notification-service
+      sasl:
+        mechanism: PLAIN
+        jaas:
+          config: >
               org.apache.kafka.common.security.plain.PlainLoginModule required
               username='${KAFKA_API_KEY}'
               password='${KAFKA_API_SECRET}';
-        security:
-          protocol: SASL_SSL
-        session:
-          timeout:
-            ms: 45000
+      security:
+        protocol: SASL_SSL
+      session:
+        timeout:
+          ms: 45000
 
 
   mail:
@@ -43,6 +44,7 @@ spring:
           auth: true
           starttls:
             enable: true
+
 
 server:
   port: 8083

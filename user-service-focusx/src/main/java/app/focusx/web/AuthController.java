@@ -42,6 +42,20 @@ public class AuthController {
         this.userService.register(request);
     }
 
+    @PostMapping("/verify")
+    @Operation(
+            summary = "Verify user",
+            description = "Verifies a user by verification code sent on email and sets access and refresh token.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Verification successful, tokens set."),
+            }
+    )
+    public ResponseEntity<?> verify(@RequestParam String code) {
+        User user = userService.verify(code);
+
+        return buildAuthResponse(user);
+    }
+
     @PostMapping("/login")
     @Operation(
             summary = "Authenticate a user",
@@ -52,25 +66,12 @@ public class AuthController {
             }
     )
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        User user = userService.verify(request);
+        User user = userService.login(request);
 
-        String accessToken = jwtService.generateAccessToken(UUID.fromString(user.getId()), user.getRole().toString());
-        String refreshToken = jwtService.generateRefreshToken(UUID.fromString(user.getId()), user.getRole().toString());
-
-
-        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
-                .httpOnly(true)
-                .secure(true)
-                .path("/api/auth/refresh")
-                .maxAge(Duration.ofDays(7))
-                .sameSite("None")
-                .build();
-
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(Map.of("access_token", accessToken));
+        return buildAuthResponse(user);
     }
+
+
 
     @PostMapping("/refresh")
     @Operation(
@@ -135,5 +136,24 @@ public class AuthController {
     )
     public void logout(HttpServletResponse response) {
         CookieUtils.clearAuthCookies(response);
+    }
+
+    private ResponseEntity<Map<String, String>> buildAuthResponse(User user) {
+        String accessToken = jwtService.generateAccessToken(UUID.fromString(user.getId()), user.getRole().toString());
+        String refreshToken = jwtService.generateRefreshToken(UUID.fromString(user.getId()), user.getRole().toString());
+
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/auth/refresh")
+                .maxAge(Duration.ofDays(7))
+                .sameSite("None")
+                .build();
+
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(Map.of("access_token", accessToken));
     }
 }

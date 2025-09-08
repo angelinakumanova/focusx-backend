@@ -105,7 +105,7 @@ public class UserServiceUTest {
     }
 
     @Test
-    void givenValidCredentials_whenVerify_thenReturnUser() {
+    void givenValidCredentials_whenLogin_thenReturnUser() {
         // Given
         LoginRequest request = new LoginRequest();
         request.setUsername("testuser");
@@ -129,7 +129,7 @@ public class UserServiceUTest {
         when(userRepository.getUserById(userId.toString())).thenReturn(Optional.of(expectedUser));
 
         // When
-        User result = userService.verify(request);
+        User result = userService.login(request);
 
         // Then
         assertThat(result).isEqualTo(expectedUser);

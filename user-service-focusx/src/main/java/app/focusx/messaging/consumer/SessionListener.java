@@ -1,6 +1,6 @@
 package app.focusx.messaging.consumer;
 
-import app.focusx.messaging.event.SessionEvent;
+import app.focusx.messaging.consumer.event.SessionEvent;
 import app.focusx.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

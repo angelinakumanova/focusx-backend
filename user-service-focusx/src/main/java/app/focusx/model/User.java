@@ -24,6 +24,7 @@ public class User {
     private String password;
     private UserRole role;
     private boolean isActive;
+    private UserStatus status;
     private LocalDateTime lastModifiedUsername;
     private LocalDateTime lastModifiedPassword;
     private LocalDateTime createdAt;

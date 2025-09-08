@@ -81,7 +81,7 @@ public class AuthControllerApiTest {
                 .role(UserRole.USER)
                 .build();
 
-        when(userService.verify(request)).thenReturn(user);
+        when(userService.login(request)).thenReturn(user);
         when(jwtService.generateAccessToken(any(), any())).thenReturn("fake-access-token");
         when(jwtService.generateRefreshToken(any(), any())).thenReturn("fake-refresh-token");
 
@@ -95,7 +95,7 @@ public class AuthControllerApiTest {
                                 org.hamcrest.Matchers.startsWith("refresh_token=")
                         )));
 
-        verify(userService).verify(request);
+        verify(userService).login(request);
         verify(jwtService).generateAccessToken(any(), any());
         verify(jwtService).generateRefreshToken(any(), any());
     }
@@ -106,7 +106,7 @@ public class AuthControllerApiTest {
         request.setUsername("1");
         request.setPassword("123456t");
 
-        when(userService.verify(request)).thenThrow(new BadCredentialsException("Invalid credentials"));
+        when(userService.login(request)).thenThrow(new BadCredentialsException("Invalid credentials"));
 
         mockMvc.perform(post(BASE_API_URL + "/login")
                         .contentType(MediaType.APPLICATION_JSON)

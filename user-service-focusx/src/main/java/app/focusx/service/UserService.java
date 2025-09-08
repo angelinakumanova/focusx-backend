@@ -3,8 +3,14 @@ package app.focusx.service;
 import app.focusx.exception.PasswordUpdateException;
 import app.focusx.exception.UserNotFoundException;
 import app.focusx.exception.UsernameUpdateException;
+import app.focusx.exception.VerificationCodeException;
+import app.focusx.messaging.producer.RegisterEventProducer;
+import app.focusx.messaging.producer.VerifiedUserEventProducer;
+import app.focusx.messaging.producer.event.RegisterEvent;
+import app.focusx.messaging.producer.event.VerifiedUserEvent;
 import app.focusx.model.User;
 import app.focusx.model.UserRole;
+import app.focusx.model.UserStatus;
 import app.focusx.repository.UserRepository;
 import app.focusx.security.AuthenticationMetadata;
 import app.focusx.web.dto.LoginRequest;
@@ -12,7 +18,6 @@ import app.focusx.web.dto.RegisterRequest;
 import app.focusx.web.dto.UserResponse;
 import app.focusx.web.mapper.DtoMapper;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,10 +47,15 @@ public class UserService implements UserDetailsService {
     private final BCryptPasswordEncoder encoder;
     private final RedisTemplate<String, String> redisTemplate;
 
-    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager, RedisTemplate<String, String> redisTemplate) {
+    private final RegisterEventProducer registerEventProducer;
+    private final VerifiedUserEventProducer verifiedUserEventProducer;
+
+    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager, RedisTemplate<String, String> redisTemplate, RegisterEventProducer registerEventProducer, VerifiedUserEventProducer verifiedUserEventProducer) {
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
         this.redisTemplate = redisTemplate;
+        this.registerEventProducer = registerEventProducer;
+        this.verifiedUserEventProducer = verifiedUserEventProducer;
         this.encoder = new BCryptPasswordEncoder(12);
     }
 
@@ -64,9 +74,36 @@ public class UserService implements UserDetailsService {
 
     public void register(RegisterRequest request) {
         this.userRepository.save(createNewUser(request));
+        String code = UUID.randomUUID().toString();
+
+        redisTemplate.opsForValue().set(code, request.getEmail(), 15, TimeUnit.MINUTES);
+
+        RegisterEvent event = new RegisterEvent(code, request.getEmail());
+        registerEventProducer.sendRegisterEvent(event);
     }
 
-    public User verify(LoginRequest request) {
+    public User verify(String verificationCode) {
+        String email = redisTemplate.opsForValue().get(verificationCode);
+
+        if (email == null) {
+            throw new VerificationCodeException("Invalid verification code");
+        }
+
+        Optional<User> optionalUser = userRepository.getByEmail(email);
+
+        if (optionalUser.isEmpty()) {
+            throw new UserNotFoundException("User not found");
+        }
+
+        User user = optionalUser.get();
+        user.setStatus(UserStatus.VERIFIED);
+
+        verifiedUserEventProducer.sendVerifiedUserEvent(new VerifiedUserEvent(user.getUsername(), email));
+
+        return userRepository.save(user);
+    }
+
+    public User login(LoginRequest request) {
         Authentication auth = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
@@ -232,6 +269,7 @@ public class UserService implements UserDetailsService {
                 .email(request.getEmail())
                 .password(encoder.encode(request.getPassword()))
                 .isActive(true)
+                .status(UserStatus.PENDING)
                 .role(UserRole.USER)
                 .createdAt(LocalDateTime.now())
                 .streak(0)

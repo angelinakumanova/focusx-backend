@@ -1,6 +1,6 @@
 package app.focusx.repository;
 
-import app.focusx.model.notification.Notification;
+import app.focusx.model.Notification;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

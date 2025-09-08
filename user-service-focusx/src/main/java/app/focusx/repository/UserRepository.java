@@ -15,6 +15,8 @@ public interface UserRepository extends MongoRepository<User, UUID> {
 
     Optional<User> getUserByUsername(String username);
 
+    Optional<User> getByEmail(String email);
+
     boolean existsByUsernameIgnoreCase(String username);
 
     boolean existsByEmail(String email);
@@ -22,4 +24,6 @@ public interface UserRepository extends MongoRepository<User, UUID> {
     Optional<User> findByUsernameAndIsActive(String username, boolean active);
 
     List<User> findByIsActiveFalseAndDeletedAtBefore(LocalDateTime cutoff);
+
+
 }
