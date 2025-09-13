@@ -48,6 +48,7 @@ public class AuthController {
             description = "Verifies a user by verification code sent on email and sets access and refresh token.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Verification successful, tokens set."),
+                    @ApiResponse(responseCode = "400", description = "Invalid verification code.")
             }
     )
     public ResponseEntity<?> verify(@RequestParam String code) {

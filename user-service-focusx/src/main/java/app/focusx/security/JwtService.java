@@ -44,6 +44,16 @@ public class JwtService {
                 .compact();
     }
 
+    public String generateVerificationToken(UUID userId) {
+        return Jwts.builder()
+                .subject(userId.toString())
+                .issuedAt(new Date())
+                .expiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
+                .signWith(privateKey)
+                .compact();
+
+    }
+
     public String extractUserId(String token) {
         return extractClaim(token, Claims::getSubject);
     }
