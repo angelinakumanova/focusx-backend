@@ -44,9 +44,10 @@ public class JwtService {
                 .compact();
     }
 
-    public String generateVerificationToken(UUID userId) {
+    public String generateVerificationToken(String userId) {
         return Jwts.builder()
-                .subject(userId.toString())
+                .subject(userId)
+                .claim("type", "verification")
                 .issuedAt(new Date())
                 .expiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
                 .signWith(privateKey)
@@ -54,8 +55,27 @@ public class JwtService {
 
     }
 
+    public boolean isValidVerificationToken(String token) {
+
+
+        Claims claims = extractAllClaims(token);
+
+        String type = claims.get("type", String.class);
+
+        if ("verification".equals(type) && !isTokenExpired(token)) {
+            return true;
+        }
+
+        throw new IllegalArgumentException("Invalid token type");
+    }
+
     public String extractUserId(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public boolean validateToken(String token, AuthenticationMetadata authenticationMetadata) {
+        final String userId = extractUserId(token);
+        return (userId.equals(authenticationMetadata.getUserId().toString()) && !isTokenExpired(token));
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
@@ -71,10 +91,7 @@ public class JwtService {
                 .getPayload();
     }
 
-    public boolean validateToken(String token, AuthenticationMetadata authenticationMetadata) {
-        final String userId = extractUserId(token);
-        return (userId.equals(authenticationMetadata.getUserId().toString()) && !isTokenExpired(token));
-    }
+
 
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());

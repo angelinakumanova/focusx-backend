@@ -3,7 +3,6 @@ package app.focusx.service;
 import app.focusx.exception.PasswordUpdateException;
 import app.focusx.exception.UserNotFoundException;
 import app.focusx.exception.UsernameUpdateException;
-import app.focusx.exception.VerificationCodeException;
 import app.focusx.messaging.producer.RegisterEventProducer;
 import app.focusx.messaging.producer.VerifiedUserEventProducer;
 import app.focusx.messaging.producer.event.RegisterEvent;
@@ -72,24 +71,19 @@ public class UserService implements UserDetailsService {
         return new AuthenticationMetadata(UUID.fromString(user.getId()), user.getUsername(), user.getPassword(), user.getRole(), user.isActive());
     }
 
-    public void register(RegisterRequest request) {
-        this.userRepository.save(createNewUser(request));
-        String code = UUID.randomUUID().toString();
+    public User register(RegisterRequest request) {
+        User user = this.userRepository.save(createNewUser(request));
 
-        redisTemplate.opsForValue().set(code, request.getEmail(), 15, TimeUnit.MINUTES);
 
-        RegisterEvent event = new RegisterEvent(code, request.getEmail());
+        RegisterEvent event = new RegisterEvent(request.getEmail());
         registerEventProducer.sendRegisterEvent(event);
+
+        return user;
     }
 
-    public User verify(String verificationCode) {
-        String email = redisTemplate.opsForValue().get(verificationCode);
+    public User verify(String userId) {
 
-        if (email == null) {
-            throw new VerificationCodeException("Invalid verification code");
-        }
-
-        Optional<User> optionalUser = userRepository.getByEmail(email);
+        Optional<User> optionalUser = userRepository.getByIdAndStatus(userId, UserStatus.PENDING);
 
         if (optionalUser.isEmpty()) {
             throw new UserNotFoundException("User not found");
@@ -98,7 +92,7 @@ public class UserService implements UserDetailsService {
         User user = optionalUser.get();
         user.setStatus(UserStatus.VERIFIED);
 
-        verifiedUserEventProducer.sendVerifiedUserEvent(new VerifiedUserEvent(user.getUsername(), email));
+        verifiedUserEventProducer.sendVerifiedUserEvent(new VerifiedUserEvent(user.getUsername(), user.getEmail()));
 
         return userRepository.save(user);
     }
@@ -277,4 +271,20 @@ public class UserService implements UserDetailsService {
     }
 
 
+    public boolean isPendingUser(String email) {
+
+        Optional<User> user = userRepository.findByEmailAndStatus(email, UserStatus.PENDING);
+
+        return user.isPresent();
+    }
+
+    public User getByEmail(String email) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+
+        if (optionalUser.isEmpty()) {
+            throw new UserNotFoundException("User not found");
+        }
+
+        return optionalUser.get();
+    }
 }

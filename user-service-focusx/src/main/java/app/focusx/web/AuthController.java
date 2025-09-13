@@ -10,6 +10,7 @@ import app.focusx.web.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -38,8 +39,13 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "Register a new user",
             description = "Takes a username, email, and password to create an account.")
-    public void register(@Valid @RequestBody RegisterRequest request) {
-        this.userService.register(request);
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        User user = this.userService.register(request);
+
+        String verificationToken = jwtService.generateVerificationToken(user.getId());
+
+
+        return ResponseEntity.ok().body(Map.of("verification_token", verificationToken));
     }
 
     @PostMapping("/verify")
@@ -51,10 +57,34 @@ public class AuthController {
                     @ApiResponse(responseCode = "400", description = "Invalid verification code.")
             }
     )
-    public ResponseEntity<?> verify(@RequestParam String code) {
-        User user = userService.verify(code);
+    public ResponseEntity<?> verify(@RequestHeader(value = "Authorization", required = false) String verificationToken) {
 
-        return buildAuthResponse(user);
+        if (verificationToken != null && verificationToken.startsWith("Bearer ")) {
+            verificationToken = verificationToken.substring(7);
+        }
+
+        if (jwtService.isValidVerificationToken(verificationToken)) {
+            String userId = jwtService.extractUserId(verificationToken);
+            User user = userService.verify(userId);
+
+            return buildAuthResponse(user);
+        }
+
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<?> resendVerification(@RequestBody String email) {
+
+        if (userService.isPendingUser(email)) {
+            User user = userService.getByEmail(email);
+            String verificationToken = jwtService.generateVerificationToken(user.getId());
+
+            return ResponseEntity.ok().body(Map.of("verification_token", verificationToken));
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 
 

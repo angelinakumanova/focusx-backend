@@ -3,7 +3,6 @@ package app.focusx.web.advice;
 import app.focusx.exception.PasswordUpdateException;
 import app.focusx.exception.UserNotFoundException;
 import app.focusx.exception.UsernameUpdateException;
-import app.focusx.exception.VerificationCodeException;
 import app.focusx.web.dto.ErrorResponse;
 import app.focusx.web.dto.FieldError;
 import jakarta.servlet.http.HttpServletRequest;
@@ -87,19 +86,5 @@ public class ExceptionAdvice {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
-    @ExceptionHandler(VerificationCodeException.class)
-    public ResponseEntity<ErrorResponse> handleVerificationCodeException(
-            VerificationCodeException ex, HttpServletRequest request
-    ) {
-        ErrorResponse error = ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .error("Invalid verification code")
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
 
 }

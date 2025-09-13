@@ -34,10 +34,7 @@ public class EmailService {
     public void sendVerificationCodeEmail(RegisterEvent event) {
         String subject = "Verify Your Account";
 
-        Context context = new Context();
-        context.setVariable("code", event.getVerificationCode());
-
-        String body = templateEngine.process(EmailType.VERIFICATION.getTemplate(), context);
+        String body = templateEngine.process(EmailType.VERIFICATION.getTemplate(), new Context());
 
         sendMail(event.getContact(), subject, body);
     }
@@ -66,6 +63,7 @@ public class EmailService {
         try {
             sender.send(mimeMessage -> {
                 MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true);
+                messageHelper.setFrom("foocusx@outlook.com");
                 messageHelper.setTo(email);
                 messageHelper.setSubject(subject);
                 messageHelper.setText(body, true);

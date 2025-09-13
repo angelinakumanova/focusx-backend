@@ -1,6 +1,7 @@
 package app.focusx.repository;
 
 import app.focusx.model.User;
+import app.focusx.model.UserStatus;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,7 +16,7 @@ public interface UserRepository extends MongoRepository<User, UUID> {
 
     Optional<User> getUserByUsername(String username);
 
-    Optional<User> getByEmail(String email);
+    Optional<User> getByIdAndStatus(String id, UserStatus status);
 
     boolean existsByUsernameIgnoreCase(String username);
 
@@ -25,5 +26,7 @@ public interface UserRepository extends MongoRepository<User, UUID> {
 
     List<User> findByIsActiveFalseAndDeletedAtBefore(LocalDateTime cutoff);
 
+    Optional<User> findByEmailAndStatus(String email, UserStatus status);
 
+    Optional<User> findByEmail(String email);
 }
