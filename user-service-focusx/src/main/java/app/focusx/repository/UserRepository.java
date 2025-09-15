@@ -22,7 +22,7 @@ public interface UserRepository extends MongoRepository<User, UUID> {
 
     boolean existsByEmail(String email);
 
-    Optional<User> findByUsernameAndIsActive(String username, boolean active);
+    Optional<User> findByUsernameAndIsActiveTrue(String username);
 
     List<User> findByIsActiveFalseAndDeletedAtBefore(LocalDateTime cutoff);
 

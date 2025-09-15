@@ -7,6 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class RegisterEvent {
 
+    private String verificationCode;
     private String contact;
 
 }

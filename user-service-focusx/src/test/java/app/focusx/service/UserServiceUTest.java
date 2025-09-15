@@ -61,7 +61,7 @@ public class UserServiceUTest {
                 .isActive(true)
                 .build();
 
-        when(userRepository.findByUsernameAndIsActive(username, true)).thenReturn(Optional.of(user));
+        when(userRepository.findByUsernameAndIsActiveTrue(username)).thenReturn(Optional.of(user));
 
         AuthenticationMetadata principal = (AuthenticationMetadata) userService.loadUserByUsername(username);
 
@@ -77,7 +77,7 @@ public class UserServiceUTest {
 
     @Test
     void givenNonExistingUserUsername_whenLoadUserByUsername_thenThrowsException() {
-        when(userRepository.findByUsernameAndIsActive(any(String.class), any(boolean.class))).thenReturn(Optional.empty());
+        when(userRepository.findByUsernameAndIsActiveTrue(any(String.class))).thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> userService.loadUserByUsername("test"));
     }

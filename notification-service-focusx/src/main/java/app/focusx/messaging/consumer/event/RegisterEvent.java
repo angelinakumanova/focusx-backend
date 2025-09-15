@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RegisterEvent {
 
+    private String verificationCode;
     private String contact;
 
 }

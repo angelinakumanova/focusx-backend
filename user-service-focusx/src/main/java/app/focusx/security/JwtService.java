@@ -44,31 +44,6 @@ public class JwtService {
                 .compact();
     }
 
-    public String generateVerificationToken(String userId) {
-        return Jwts.builder()
-                .subject(userId)
-                .claim("type", "verification")
-                .issuedAt(new Date())
-                .expiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
-                .signWith(privateKey)
-                .compact();
-
-    }
-
-    public boolean isValidVerificationToken(String token) {
-
-
-        Claims claims = extractAllClaims(token);
-
-        String type = claims.get("type", String.class);
-
-        if ("verification".equals(type) && !isTokenExpired(token)) {
-            return true;
-        }
-
-        throw new IllegalArgumentException("Invalid token type");
-    }
-
     public String extractUserId(String token) {
         return extractClaim(token, Claims::getSubject);
     }

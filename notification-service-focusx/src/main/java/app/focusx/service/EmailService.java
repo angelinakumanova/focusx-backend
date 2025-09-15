@@ -34,7 +34,10 @@ public class EmailService {
     public void sendVerificationCodeEmail(RegisterEvent event) {
         String subject = "Verify Your Account";
 
-        String body = templateEngine.process(EmailType.VERIFICATION.getTemplate(), new Context());
+        Context context = new Context();
+        context.setVariable("verificationCode", event.getVerificationCode());
+
+        String body = templateEngine.process(EmailType.VERIFICATION.getTemplate(), context);
 
         sendMail(event.getContact(), subject, body);
     }

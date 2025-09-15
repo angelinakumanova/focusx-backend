@@ -60,7 +60,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<User> optionalUser = userRepository.findByUsernameAndIsActive(username, true);
+        Optional<User> optionalUser = userRepository.findByUsernameAndIsActiveTrue(username);
 
         if (optionalUser.isEmpty()) {
             throw new UsernameNotFoundException("User not found");
@@ -74,14 +74,21 @@ public class UserService implements UserDetailsService {
     public User register(RegisterRequest request) {
         User user = this.userRepository.save(createNewUser(request));
 
+        String verificationCode = UUID.randomUUID().toString();
+        redisTemplate.opsForValue().set("verification::" + verificationCode, user.getId(), 15, TimeUnit.MINUTES);
 
-        RegisterEvent event = new RegisterEvent(request.getEmail());
+        RegisterEvent event = new RegisterEvent(verificationCode, request.getEmail());
         registerEventProducer.sendRegisterEvent(event);
 
         return user;
     }
 
-    public User verify(String userId) {
+    public User verify(String verificationCode) {
+        String userId = redisTemplate.opsForValue().get("verification::" + verificationCode);
+
+        if (userId == null) {
+            throw new UserNotFoundException("User not found");
+        }
 
         Optional<User> optionalUser = userRepository.getByIdAndStatus(userId, UserStatus.PENDING);
 

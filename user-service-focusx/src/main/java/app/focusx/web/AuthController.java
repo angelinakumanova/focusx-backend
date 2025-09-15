@@ -42,10 +42,7 @@ public class AuthController {
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         User user = this.userService.register(request);
 
-        String verificationToken = jwtService.generateVerificationToken(user.getId());
-
-
-        return ResponseEntity.ok().body(Map.of("verification_token", verificationToken));
+        return ResponseEntity.ok().body(Map.of("user_id", user.getId()));
     }
 
     @PostMapping("/verify")
@@ -57,18 +54,7 @@ public class AuthController {
                     @ApiResponse(responseCode = "400", description = "Invalid verification code.")
             }
     )
-    public ResponseEntity<?> verify(@RequestHeader(value = "Authorization", required = false) String verificationToken) {
-
-        if (verificationToken != null && verificationToken.startsWith("Bearer ")) {
-            verificationToken = verificationToken.substring(7);
-        }
-
-        if (jwtService.isValidVerificationToken(verificationToken)) {
-            String userId = jwtService.extractUserId(verificationToken);
-            User user = userService.verify(userId);
-
-            return buildAuthResponse(user);
-        }
+    public ResponseEntity<?> verify() {
 
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
