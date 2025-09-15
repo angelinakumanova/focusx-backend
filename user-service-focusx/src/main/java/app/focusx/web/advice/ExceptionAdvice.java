@@ -1,5 +1,6 @@
 package app.focusx.web.advice;
 
+import app.focusx.exception.InvalidVerificationCodeException;
 import app.focusx.exception.PasswordUpdateException;
 import app.focusx.exception.UserNotFoundException;
 import app.focusx.exception.UsernameUpdateException;
@@ -86,5 +87,18 @@ public class ExceptionAdvice {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
+
+    @ExceptionHandler(InvalidVerificationCodeException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidVerificationCode(InvalidVerificationCodeException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .error("Invalid or expired verification code")
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
 
 }

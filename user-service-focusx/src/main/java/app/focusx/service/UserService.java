@@ -1,5 +1,6 @@
 package app.focusx.service;
 
+import app.focusx.exception.InvalidVerificationCodeException;
 import app.focusx.exception.PasswordUpdateException;
 import app.focusx.exception.UserNotFoundException;
 import app.focusx.exception.UsernameUpdateException;
@@ -87,7 +88,7 @@ public class UserService implements UserDetailsService {
         String userId = redisTemplate.opsForValue().get("verification::" + verificationCode);
 
         if (userId == null) {
-            throw new UserNotFoundException("User not found");
+            throw new InvalidVerificationCodeException("Invalid or expired verification code");
         }
 
         Optional<User> optionalUser = userRepository.getByIdAndStatus(userId, UserStatus.PENDING);

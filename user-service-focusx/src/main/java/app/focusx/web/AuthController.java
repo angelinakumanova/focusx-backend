@@ -51,13 +51,11 @@ public class AuthController {
             description = "Verifies a user by verification code sent on email and sets access and refresh token.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Verification successful, tokens set."),
-                    @ApiResponse(responseCode = "400", description = "Invalid verification code.")
+                    @ApiResponse(responseCode = "400", description = "Invalid or expired verification code.")
             }
     )
-    public ResponseEntity<?> verify() {
-
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    public void verify(@RequestParam String verificationCode) {
+        userService.verify(verificationCode);
     }
 
     @PostMapping("/resend-verification")
@@ -65,9 +63,9 @@ public class AuthController {
 
         if (userService.isPendingUser(email)) {
             User user = userService.getByEmail(email);
-            String verificationToken = jwtService.generateVerificationToken(user.getId());
+//            String verificationToken = jwtService.generateVerificationToken(user.getId());
 
-            return ResponseEntity.ok().body(Map.of("verification_token", verificationToken));
+//            return ResponseEntity.ok().body(Map.of("verification_token", verificationToken));
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
