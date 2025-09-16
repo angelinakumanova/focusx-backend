@@ -1,9 +1,6 @@
 package app.focusx.web.advice;
 
-import app.focusx.exception.InvalidVerificationCodeException;
-import app.focusx.exception.PasswordUpdateException;
-import app.focusx.exception.UserNotFoundException;
-import app.focusx.exception.UsernameUpdateException;
+import app.focusx.exception.*;
 import app.focusx.web.dto.ErrorResponse;
 import app.focusx.web.dto.FieldError;
 import jakarta.servlet.http.HttpServletRequest;
@@ -88,17 +85,28 @@ public class ExceptionAdvice {
     }
 
 
-    @ExceptionHandler(InvalidVerificationCodeException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidVerificationCode(InvalidVerificationCodeException ex, HttpServletRequest request) {
+    @ExceptionHandler(VerificationException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidVerificationCode(VerificationException ex, HttpServletRequest request) {
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
                 .message(ex.getMessage())
                 .path(request.getRequestURI())
-                .error("Invalid or expired verification code")
                 .timestamp(LocalDateTime.now())
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(UnverifiedUserException.class)
+    public ResponseEntity<ErrorResponse> handleUnverifiedUser(UnverifiedUserException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.FORBIDDEN.value())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
 }

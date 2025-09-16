@@ -6,6 +6,7 @@ import app.focusx.service.UserService;
 import app.focusx.util.CookieUtils;
 import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
+import app.focusx.web.dto.ResendVerificationRequest;
 import app.focusx.web.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -39,10 +40,8 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "Register a new user",
             description = "Takes a username, email, and password to create an account.")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-        User user = this.userService.register(request);
-
-        return ResponseEntity.ok().body(Map.of("user_id", user.getId()));
+    public void register(@Valid @RequestBody RegisterRequest request) {
+        this.userService.register(request);
     }
 
     @PostMapping("/verify")
@@ -59,16 +58,8 @@ public class AuthController {
     }
 
     @PostMapping("/resend-verification")
-    public ResponseEntity<?> resendVerification(@RequestBody String email) {
-
-        if (userService.isPendingUser(email)) {
-            User user = userService.getByEmail(email);
-//            String verificationToken = jwtService.generateVerificationToken(user.getId());
-
-//            return ResponseEntity.ok().body(Map.of("verification_token", verificationToken));
-        }
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    public void resendVerification(@RequestBody ResendVerificationRequest request) {
+        userService.resendVerification(request.getEmail());
     }
 
 
