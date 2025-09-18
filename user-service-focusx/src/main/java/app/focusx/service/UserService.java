@@ -39,6 +39,9 @@ public class UserService implements UserDetailsService {
     private static final String VERIFICATION_PREFIX = "verification::";
     private static final long VERIFICATION_TTL_MINUTES = 15;
 
+    private static final String RESEND_PREFIX = "resend::";
+    private static final int MAX_RESEND_ATTEMPTS = 3;
+
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
 
@@ -115,14 +118,23 @@ public class UserService implements UserDetailsService {
     }
 
     public void resendVerification(String email) {
+        User user = userRepository.findByEmailAndStatus(email, UserStatus.PENDING)
+                .orElseThrow(() -> new IllegalArgumentException("User is already verified or does not exist"));
 
-        if (isPendingUser(email)) {
-            User user = getByEmail(email);
-            sendVerification(user);
-            return;
+
+        String key = RESEND_PREFIX + user.getId();
+        Long attempts = redisTemplate.opsForValue().get(key);
+
+        if (attempts == 1) {
+            redisTemplate.expire(key, Duration.ofHours(1));
         }
 
-        throw new IllegalArgumentException("User is already verified or does not exist");
+        if (attempts > MAX_RESEND_ATTEMPTS) {
+            throw new TooManyAttemptsException(String.format("You can only resend %s verification emails per hour", MAX_RESEND_ATTEMPTS));
+        }
+
+
+        sendVerification(user);
     }
 
 
