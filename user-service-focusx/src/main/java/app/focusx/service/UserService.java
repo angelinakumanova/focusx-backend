@@ -80,7 +80,7 @@ public class UserService implements UserDetailsService {
 
         if (user.getStatus() == UserStatus.PENDING) {
             sendVerification(user);
-            throw new UnverifiedUserException("User is registered but not verified");
+            throw new UnverifiedUserException("User is registered but not verified", user.getEmail());
         }
 
         return user;

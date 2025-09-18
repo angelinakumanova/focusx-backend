@@ -15,6 +15,7 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestControllerAdvice
 public class ExceptionAdvice {
@@ -98,7 +99,7 @@ public class ExceptionAdvice {
     }
 
     @ExceptionHandler(UnverifiedUserException.class)
-    public ResponseEntity<ErrorResponse> handleUnverifiedUser(UnverifiedUserException ex, HttpServletRequest request) {
+    public ResponseEntity<Map<String, ?>> handleUnverifiedUser(UnverifiedUserException ex, HttpServletRequest request) {
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.FORBIDDEN.value())
                 .message(ex.getMessage())
@@ -106,7 +107,8 @@ public class ExceptionAdvice {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", error, "email", ex.getEmail()));
     }
 
 }
