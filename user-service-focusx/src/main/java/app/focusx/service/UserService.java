@@ -123,16 +123,18 @@ public class UserService implements UserDetailsService {
 
 
         String key = RESEND_PREFIX + user.getId();
-        Long attempts = redisTemplate.opsForValue().get(key);
 
-        if (attempts == 1) {
-            redisTemplate.expire(key, Duration.ofHours(1));
-        }
+        String attemptsStr = redisTemplate.opsForValue().get(key);
+        int attempts = attemptsStr != null ? Integer.parseInt(attemptsStr) : 0;
 
-        if (attempts > MAX_RESEND_ATTEMPTS) {
+        if (attempts >= MAX_RESEND_ATTEMPTS) {
             throw new TooManyAttemptsException(String.format("You can only resend %s verification emails per hour", MAX_RESEND_ATTEMPTS));
         }
 
+        attempts = redisTemplate.opsForValue().increment(key).intValue();
+        if (attempts == 1) {
+            redisTemplate.expire(key, Duration.ofHours(1));
+        }
 
         sendVerification(user);
     }
