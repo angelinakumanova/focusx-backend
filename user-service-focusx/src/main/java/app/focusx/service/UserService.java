@@ -2,7 +2,6 @@ package app.focusx.service;
 
 import app.focusx.exception.*;
 import app.focusx.messaging.producer.RegisterEventProducer;
-import app.focusx.messaging.producer.VerifiedUserEventProducer;
 import app.focusx.messaging.producer.event.RegisterEvent;
 import app.focusx.messaging.producer.event.VerifiedUserEvent;
 import app.focusx.model.User;
@@ -16,6 +15,7 @@ import app.focusx.web.dto.UserResponse;
 import app.focusx.web.mapper.DtoMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,19 +44,21 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
+    private final VerificationService verificationService;
 
     private final BCryptPasswordEncoder encoder;
     private final RedisTemplate<String, String> redisTemplate;
 
+    private final ApplicationEventPublisher eventPublisher;
     private final RegisterEventProducer registerEventProducer;
-    private final VerifiedUserEventProducer verifiedUserEventProducer;
 
-    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager, RedisTemplate<String, String> redisTemplate, RegisterEventProducer registerEventProducer, VerifiedUserEventProducer verifiedUserEventProducer) {
+    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager, VerificationService verificationService, RedisTemplate<String, String> redisTemplate, ApplicationEventPublisher eventPublisher, RegisterEventProducer registerEventProducer) {
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
+        this.verificationService = verificationService;
         this.redisTemplate = redisTemplate;
+        this.eventPublisher = eventPublisher;
         this.registerEventProducer = registerEventProducer;
-        this.verifiedUserEventProducer = verifiedUserEventProducer;
         this.encoder = new BCryptPasswordEncoder(12);
     }
 
@@ -96,45 +98,24 @@ public class UserService implements UserDetailsService {
     }
 
 
+    @Transactional
     public void verify(String verificationCode) {
-        String userId = redisTemplate.opsForValue().get(VERIFICATION_PREFIX + verificationCode);
+        String userId = verificationService.verify(verificationCode);
+        User user = userRepository.getByIdAndStatus(userId, UserStatus.PENDING)
+                .orElseThrow(() -> new UserNotFoundException("User Not Found"));
 
-        if (userId == null) {
-            throw new VerificationException("Invalid or expired verification code");
-        }
-
-        Optional<User> optionalUser = userRepository.getByIdAndStatus(userId, UserStatus.PENDING);
-
-        if (optionalUser.isEmpty()) {
-            throw new UserNotFoundException("User not found");
-        }
-
-        User user = optionalUser.get();
         user.setStatus(UserStatus.VERIFIED);
-
-        verifiedUserEventProducer.sendVerifiedUserEvent(new VerifiedUserEvent(user.getUsername(), user.getEmail()));
-
         userRepository.save(user);
+
+        eventPublisher.publishEvent(new VerifiedUserEvent(user.getUsername(), user.getEmail()));
     }
 
+    @Transactional
     public void resendVerification(String email) {
         User user = userRepository.findByEmailAndStatus(email, UserStatus.PENDING)
                 .orElseThrow(() -> new IllegalArgumentException("User is already verified or does not exist"));
 
-
-        String key = RESEND_PREFIX + user.getId();
-
-        String attemptsStr = redisTemplate.opsForValue().get(key);
-        int attempts = attemptsStr != null ? Integer.parseInt(attemptsStr) : 0;
-
-        if (attempts >= MAX_RESEND_ATTEMPTS) {
-            throw new TooManyAttemptsException(String.format("You can only resend %s verification emails per hour", MAX_RESEND_ATTEMPTS));
-        }
-
-        attempts = redisTemplate.opsForValue().increment(key).intValue();
-        if (attempts == 1) {
-            redisTemplate.expire(key, Duration.ofHours(1));
-        }
+        verificationService.validateResendAttempt(email);
 
         sendVerification(user);
     }
@@ -208,6 +189,24 @@ public class UserService implements UserDetailsService {
         return DtoMapper.mapUserToUserResponse(optionalUser.get());
     }
 
+    public long getStreak(String id, String timezone) {
+        return validateStreak(id, timezone);
+    }
+
+    @CacheEvict(value = "streaks", key = "#id")
+    public long incrementStreak(String id) {
+        User user = getById(UUID.fromString(id));
+        user.setStreak(user.getStreak() + 1);
+        user.setLastUpdatedStreak(Instant.now());
+
+        return userRepository.save(user).getStreak();
+    }
+
+
+    public User getPendingUserById(String userId) {
+        return userRepository.getByIdAndStatus(userId, UserStatus.PENDING).orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
+
     public User getById(UUID userId) {
         Optional<User> optionalUser = userRepository.getUserById(userId.toString());
 
@@ -226,40 +225,14 @@ public class UserService implements UserDetailsService {
         return userRepository.existsByEmail(email);
     }
 
-
-    public long getStreak(String id, String timezone) {
-        return validateStreak(id, timezone);
-    }
-
-    @CacheEvict(value = "streaks", key = "#id")
-    public long incrementStreak(String id) {
-        User user = getById(UUID.fromString(id));
-        user.setStreak(user.getStreak() + 1);
-        user.setLastUpdatedStreak(Instant.now());
-
-        return userRepository.save(user).getStreak();
-    }
-
     private void sendVerification(User user) {
-        String verificationCode = generateVerificationCode(user.getId());
+        String verificationCode = verificationService.generateVerificationCode(user.getId());
         triggerRegisterEvent(user.getEmail(), verificationCode);
     }
 
     private void triggerRegisterEvent(String email, String verificationCode) {
         RegisterEvent event = new RegisterEvent(verificationCode, email);
         registerEventProducer.sendRegisterEvent(event);
-    }
-
-    private String generateVerificationCode(String userId) {
-        String verificationCode = UUID.randomUUID().toString();
-
-        try {
-            redisTemplate.opsForValue().set(VERIFICATION_PREFIX + verificationCode, userId, VERIFICATION_TTL_MINUTES, TimeUnit.MINUTES);
-        } catch (Exception e) {
-            throw new VerificationException("Failed to store verification code in Redis");
-        }
-
-        return verificationCode;
     }
 
     private long validateStreak(String id, String timezone) {
@@ -324,23 +297,5 @@ public class UserService implements UserDetailsService {
                 .createdAt(LocalDateTime.now())
                 .streak(0)
                 .build();
-    }
-
-
-    public boolean isPendingUser(String email) {
-
-        Optional<User> user = userRepository.findByEmailAndStatus(email, UserStatus.PENDING);
-
-        return user.isPresent();
-    }
-
-    public User getByEmail(String email) {
-        Optional<User> optionalUser = userRepository.findByEmail(email);
-
-        if (optionalUser.isEmpty()) {
-            throw new UserNotFoundException("User not found");
-        }
-
-        return optionalUser.get();
     }
 }
