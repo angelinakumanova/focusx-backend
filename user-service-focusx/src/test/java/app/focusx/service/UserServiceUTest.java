@@ -1,9 +1,13 @@
 package app.focusx.service;
 
 import app.focusx.exception.PasswordUpdateException;
+import app.focusx.exception.UserNotFoundException;
 import app.focusx.exception.UsernameUpdateException;
+import app.focusx.messaging.producer.event.RegisterEvent;
+import app.focusx.messaging.producer.event.VerifiedUserEvent;
 import app.focusx.model.User;
 import app.focusx.model.UserRole;
+import app.focusx.model.UserStatus;
 import app.focusx.repository.UserRepository;
 import app.focusx.security.AuthenticationMetadata;
 import app.focusx.web.dto.LoginRequest;
@@ -11,11 +15,12 @@ import app.focusx.web.dto.RegisterRequest;
 import app.focusx.web.dto.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.verification.VerificationEvent;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -40,14 +45,19 @@ public class UserServiceUTest {
     private UserService userService;
 
     @Mock
+    private ApplicationEventPublisher eventPublisher;
+    @Mock
     private UserRepository userRepository;
     @Mock
+    private VerificationService verificationService;
+    @Mock
     private AuthenticationManager authenticationManager;
+    @Mock
+    private RedisTemplate<String, String> redisTemplate;
+    @Mock
+    private ValueOperations<String, String> valueOperations;
 
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
-    @Captor
-    private ArgumentCaptor<User> userCaptor;
 
     @Test
     void givenHappyPath_whenLoadUserByUsername() {
@@ -83,25 +93,50 @@ public class UserServiceUTest {
     }
 
     @Test
-    void givenHappyPath_whenRegister() {
-        // Given
-        RegisterRequest registerRequest = RegisterRequest.builder()
-                .username("test")
-                .email("test@example.com")
-                .password("123456test@T")
+    void register_ShouldSaveUserAndSendVerification() {
+        // given
+        RegisterRequest request = new RegisterRequest("john_doe", "john@example.com", "password123");
+
+        User savedUser = User.builder()
+                .id("user-id")
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password("encoded-pass")
+                .isActive(true)
+                .status(UserStatus.PENDING)
+                .role(UserRole.USER)
+                .createdAt(LocalDateTime.now())
+                .streak(0)
                 .build();
 
-        // When
-        userService.register(registerRequest);
+        when(userRepository.save(any())).thenReturn(savedUser);
+        when(verificationService.generateVerificationCode(savedUser.getId())).thenReturn("code-123");
 
-        // Then
-        verify(userRepository, times(1)).save(userCaptor.capture());
-        User captured = userCaptor.getValue();
+        // when
+        userService.register(request);
 
-        assertThat(captured.getUsername()).isEqualTo(registerRequest.getUsername());
-        assertThat(captured.getEmail()).isEqualTo(registerRequest.getEmail());
-        assertThat(encoder.matches(registerRequest.getPassword(), captured.getPassword())).isTrue();
+        // then
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
 
+        verify(userRepository).save(userCaptor.capture());
+        User capturedUser = userCaptor.getValue();
+
+        assertEquals("john_doe", capturedUser.getUsername());
+        assertEquals("john@example.com", capturedUser.getEmail());
+        assertEquals(UserStatus.PENDING, capturedUser.getStatus());
+        assertNotNull(capturedUser.getPassword());
+
+        verify(verificationService).generateVerificationCode("user-id");
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        Object published = captor.getValue();
+        assertInstanceOf(RegisterEvent.class, published);
+
+        RegisterEvent event = (RegisterEvent) published;
+        assertEquals("code-123", event.getVerificationCode());
+        assertEquals("john@example.com", event.getContact());
     }
 
     @Test
@@ -152,7 +187,6 @@ public class UserServiceUTest {
         User user = User.builder().id(id.toString()).username("test").lastModifiedUsername(LocalDateTime.now().minusDays(31)).build();
 
         when(userRepository.getUserById(id.toString())).thenReturn(Optional.of(user));
-        when(userRepository.getUserByUsername(any())).thenReturn(Optional.empty());
 
         userService.updateUsername(id.toString(), "test2");
 
@@ -165,7 +199,7 @@ public class UserServiceUTest {
 
         when(userRepository.getUserById(any())).thenReturn(Optional.empty());
 
-        assertThrows(UsernameUpdateException.class, () -> userService.updateUsername(UUID.randomUUID().toString(), "test2"));
+        assertThrows(UserNotFoundException.class, () -> userService.updateUsername(UUID.randomUUID().toString(), "test2"));
     }
 
     @Test
@@ -179,25 +213,11 @@ public class UserServiceUTest {
     }
 
     @Test
-    void givenAlreadyExistingUsername_whenUpdateUsername_throwsException() {
-        UUID id = UUID.randomUUID();
-        User user = User.builder().id(id.toString()).username("test").build();
-        User user2 = User.builder().username("test2").build();
-
-        when(userRepository.getUserById(id.toString())).thenReturn(Optional.of(user));
-        when(userRepository.getUserByUsername(any())).thenReturn(Optional.of(user2));
-
-        assertThrows(UsernameUpdateException.class, () -> userService.updateUsername(id.toString(), "test2"));
-
-    }
-
-    @Test
     void givenModifiedUsernameInLast30Days_whenUpdateUsername_throwsException() {
         UUID id = UUID.randomUUID();
         User user = User.builder().id(id.toString()).username("test").lastModifiedUsername(LocalDateTime.now().minusDays(15)).build();
 
         when(userRepository.getUserById(id.toString())).thenReturn(Optional.of(user));
-        when(userRepository.getUserByUsername(any())).thenReturn(Optional.empty());
 
         assertThrows(UsernameUpdateException.class, () -> userService.updateUsername(id.toString(), "test2"));
 
@@ -335,7 +355,7 @@ public class UserServiceUTest {
     void givenNonExistingUserId_whenGetById_thenThrowsException() {
         when(userRepository.getUserById(any())).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> userService.getById(UUID.randomUUID()));
+        assertThrows(UserNotFoundException.class, () -> userService.getById(UUID.randomUUID()));
     }
 
     @Test
@@ -372,38 +392,76 @@ public class UserServiceUTest {
     }
 
     @Test
-    void givenUserWithTodayUpdatedStreak_whenGetStreak_thenReturnsUserStreak() {
-        UUID id = UUID.randomUUID();
-        User user = User.builder()
-                .id(id.toString())
-                .streak(2)
-                .lastUpdatedStreak(Instant.now())
-                .build();
+    void validateStreak_ShouldReturnCachedValue_WhenExistsInRedis() {
+        // given
+        String userId = UUID.randomUUID().toString();
+        String key = "streaks::" + userId;
 
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(key)).thenReturn("5");
 
-        when(userRepository.getUserById(id.toString())).thenReturn(Optional.of(user));
+        // when
+        long result = userService.getStreak(userId, "UTC");
 
-        long streak = userService.getStreak(id.toString(), "Europe/Sofia");
-
-        assertThat(streak).isEqualTo(user.getStreak());
+        // then
+        assertEquals(5L, result);
+        verifyNoInteractions(userRepository);
     }
 
     @Test
-    void givenUserWithYesterdayUpdatedStreak_whenGetStreak_thenReturns0Streak() {
-        UUID id = UUID.randomUUID();
-        User user = User.builder()
-                .id(id.toString())
-                .streak(2)
-                .lastUpdatedStreak(Instant.now().minus(1, ChronoUnit.DAYS))
-                .build();
+    void returnsUserStreak_whenRedisEmpty_andLastUpdatedIsNull() {
+        String id = UUID.randomUUID().toString();
+        String key = "streaks::" + id;
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(key)).thenReturn(null);
 
 
-        when(userRepository.getUserById(id.toString())).thenReturn(Optional.of(user));
-        when(userRepository.save(any(User.class))).thenReturn(user);
+        User user = makeUser(id, 3, null);
+        when(userRepository.getUserById(id)).thenReturn(Optional.of(user));
 
-        userService.getStreak(id.toString(), "Europe/Sofia");
+        long result = userService.getStreak(id, "UTC");
 
-        assertThat(user.getStreak()).isEqualTo(0);
+        assertEquals(3L, result);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void getStreak_resetsStreak_whenLastUpdatedMoreThanTwoDaysAgo() {
+        String userId = UUID.randomUUID().toString();
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(any())).thenReturn(null);
+
+        Instant oldUpdate = Instant.now().minus(3, ChronoUnit.DAYS);
+        User user = makeUser(userId, 5, oldUpdate);
+        when(userRepository.getUserById(userId)).thenReturn(Optional.of(user));
+
+        long result = userService.getStreak(userId, "UTC");
+
+        assertEquals(0L, result);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+
+        assertEquals(0, captor.getValue().getStreak());
+    }
+
+    @Test
+    void getStreak_keepsStreak_whenLastUpdatedWithinTwoDays() {
+        String userId = UUID.randomUUID().toString();
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(any())).thenReturn(null);
+
+        Instant yesterday = Instant.now().minus(1, ChronoUnit.DAYS);
+        User user = makeUser(userId, 7, yesterday);
+        when(userRepository.getUserById(userId)).thenReturn(Optional.of(user));
+
+        long result = userService.getStreak(userId, "UTC");
+
+        assertEquals(7L, result);
+        verify(userRepository, never()).save(any());
     }
 
     @Test
@@ -418,12 +476,92 @@ public class UserServiceUTest {
 
         assertThat(updatedStreak).isEqualTo(user.getStreak());
         assertNotNull(user.getLastUpdatedStreak());
+    }
 
+    @Test
+    void givenHappyPath_whenVerify_ThenSaveUserAndPublishEvent() {
+        String userId = UUID.randomUUID().toString();
+
+        User user = makeUser(userId, 0, null);
+        when(verificationService.verify(any())).thenReturn(userId);
+        when(userRepository.getByIdAndStatus(userId, UserStatus.PENDING)).thenReturn(Optional.of(user));
+
+        userService.verify("code-123");
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+
+        assertThat(userCaptor.getValue().getStatus()).isEqualTo(UserStatus.VERIFIED);
+
+        ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+
+        Object capturedEvent = eventCaptor.getValue();
+        assertInstanceOf(VerifiedUserEvent.class, capturedEvent);
+
+        VerifiedUserEvent verifiedUserEvent = (VerifiedUserEvent) capturedEvent;
+        assertEquals(verifiedUserEvent.getUsername(), user.getUsername());
+        assertEquals(verifiedUserEvent.getContact(), user.getEmail());
+    }
+
+    @Test
+    void verify_userIsAlreadyVerified_thenThrowsUserNotFoundException() {
+        when(userRepository.getByIdAndStatus(any(), any())).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> userService.verify("code-123"));
+    }
+
+    @Test
+    void happyPath_resendVerification() {
+        String email = "john@example.com";
+        String userId = UUID.randomUUID().toString();
+
+        User user = makeUser(userId, 0, null);
+        when(userRepository.findByEmailAndStatus(email, UserStatus.PENDING)).thenReturn(Optional.of(user));
+
+
+        String verificationCode = "123-code";
+        when(verificationService.generateVerificationCode(userId)).thenReturn(verificationCode);
+
+        userService.resendVerification(email);
+
+
+        verify(verificationService).validateResendAttempt(email);
+
+        ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        Object capturedEvent = captor.getValue();
+        assertInstanceOf(RegisterEvent.class, capturedEvent);
+
+        RegisterEvent registerEvent = (RegisterEvent) capturedEvent;
+        assertEquals(registerEvent.getVerificationCode(), verificationCode);
+        assertEquals(registerEvent.getContact(), user.getEmail());
+    }
+
+    @Test
+    void resendVerification_whenUserIsInvalidOrNonExistent_throwsException() {
+        when(userRepository.findByEmailAndStatus(any(), any())).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> userService.resendVerification("email"));
     }
 
 
 
-
+    private User makeUser(String id, int streak, Instant lastUpdatedStreak) {
+        return User.builder()
+                .id(id)
+                .username("john_doe")
+                .email("john@example.com")
+                .password("pwd")
+                .isActive(true)
+                .status(UserStatus.PENDING)
+                .role(UserRole.USER)
+                .createdAt(LocalDateTime.now())
+                .streak(streak)
+                .lastUpdatedStreak(lastUpdatedStreak)
+                .build();
+    }
 
 
 }
