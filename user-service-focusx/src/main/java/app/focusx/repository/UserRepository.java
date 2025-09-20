@@ -14,8 +14,6 @@ import java.util.UUID;
 public interface UserRepository extends MongoRepository<User, UUID> {
     Optional<User> getUserById(String id);
 
-    Optional<User> getUserByUsername(String username);
-
     Optional<User> getByIdAndStatus(String id, UserStatus status);
 
     boolean existsByUsernameIgnoreCase(String username);
@@ -28,5 +26,4 @@ public interface UserRepository extends MongoRepository<User, UUID> {
 
     Optional<User> findByEmailAndStatus(String email, UserStatus status);
 
-    Optional<User> findByEmail(String email);
 }

@@ -1,7 +1,6 @@
 package app.focusx.service;
 
 import app.focusx.exception.*;
-import app.focusx.messaging.producer.RegisterEventProducer;
 import app.focusx.messaging.producer.event.RegisterEvent;
 import app.focusx.messaging.producer.event.VerifiedUserEvent;
 import app.focusx.model.User;
@@ -36,12 +35,6 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserService implements UserDetailsService {
-    private static final String VERIFICATION_PREFIX = "verification::";
-    private static final long VERIFICATION_TTL_MINUTES = 15;
-
-    private static final String RESEND_PREFIX = "resend::";
-    private static final int MAX_RESEND_ATTEMPTS = 3;
-
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
     private final VerificationService verificationService;
@@ -50,15 +43,13 @@ public class UserService implements UserDetailsService {
     private final RedisTemplate<String, String> redisTemplate;
 
     private final ApplicationEventPublisher eventPublisher;
-    private final RegisterEventProducer registerEventProducer;
 
-    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager, VerificationService verificationService, RedisTemplate<String, String> redisTemplate, ApplicationEventPublisher eventPublisher, RegisterEventProducer registerEventProducer) {
+    public UserService(UserRepository userRepository, AuthenticationManager authenticationManager, VerificationService verificationService, RedisTemplate<String, String> redisTemplate, ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
         this.verificationService = verificationService;
         this.redisTemplate = redisTemplate;
         this.eventPublisher = eventPublisher;
-        this.registerEventProducer = registerEventProducer;
         this.encoder = new BCryptPasswordEncoder(12);
     }
 
@@ -202,11 +193,6 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user).getStreak();
     }
 
-
-    public User getPendingUserById(String userId) {
-        return userRepository.getByIdAndStatus(userId, UserStatus.PENDING).orElseThrow(() -> new UserNotFoundException("User not found"));
-    }
-
     public User getById(UUID userId) {
         Optional<User> optionalUser = userRepository.getUserById(userId.toString());
 
@@ -227,12 +213,7 @@ public class UserService implements UserDetailsService {
 
     private void sendVerification(User user) {
         String verificationCode = verificationService.generateVerificationCode(user.getId());
-        triggerRegisterEvent(user.getEmail(), verificationCode);
-    }
-
-    private void triggerRegisterEvent(String email, String verificationCode) {
-        RegisterEvent event = new RegisterEvent(verificationCode, email);
-        registerEventProducer.sendRegisterEvent(event);
+        eventPublisher.publishEvent(new RegisterEvent(verificationCode, user.getEmail()));
     }
 
     private long validateStreak(String id, String timezone) {
