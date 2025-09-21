@@ -51,7 +51,7 @@ public class AuthController {
     @PostMapping("/verify")
     @Operation(
             summary = "Verify user",
-            description = "Verifies a user by verification code sent on email and sets access and refresh token.",
+            description = "Verifies a user by verification code sent on email.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Verification successful."),
                     @ApiResponse(responseCode = "400", description = "Invalid or expired verification code.")
@@ -62,6 +62,9 @@ public class AuthController {
     }
 
     @PostMapping("/resend-verification")
+    @Operation(
+            summary = "Resends "
+    )
     public void resendVerification(@RequestBody ResendVerificationRequest request) {
         userService.resendVerification(request.getEmail());
     }

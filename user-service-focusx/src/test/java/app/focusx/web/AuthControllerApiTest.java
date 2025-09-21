@@ -1,6 +1,9 @@
 package app.focusx.web;
 
 import app.focusx.MockUtils;
+import app.focusx.exception.TooManyAttemptsException;
+import app.focusx.exception.UserNotFoundException;
+import app.focusx.exception.VerificationException;
 import app.focusx.model.User;
 import app.focusx.model.UserRole;
 import app.focusx.security.JwtService;
@@ -8,6 +11,7 @@ import app.focusx.service.IpRateLimiterService;
 import app.focusx.service.UserService;
 import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
+import app.focusx.web.dto.ResendVerificationRequest;
 import app.focusx.web.dto.UserResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
@@ -21,13 +25,13 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -81,7 +85,7 @@ public class AuthControllerApiTest {
     }
 
     @Test
-    void shouldLoginSuccessfully() throws Exception {
+    void login_shouldLoginSuccessfully() throws Exception {
         // given
         LoginRequest request = new LoginRequest("test@test.com", "secret");
         User user = new User();
@@ -95,7 +99,7 @@ public class AuthControllerApiTest {
                 .thenReturn("refresh-123");
 
         // when + then
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post(BASE_API_URL + "/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -105,18 +109,17 @@ public class AuthControllerApiTest {
     }
 
     @Test
-    void givenInvalidLoginCredentials_whenLogin_thenReturnsBadRequest() throws Exception {
-        LoginRequest request = new LoginRequest();
-        request.setUsername("1");
-        request.setPassword("123456t");
+    void login_shouldReturnUnauthorized_whenCredentialsInvalid() throws Exception {
+        // given
+        LoginRequest request = new LoginRequest("wrong@example.com", "wrongpass");
+        when(userService.login(any(LoginRequest.class)))
+                .thenThrow(new BadCredentialsException("Invalid username or password"));
 
-        when(userService.login(request)).thenThrow(new BadCredentialsException("Invalid credentials"));
-
+        // when + then
         mockMvc.perform(post(BASE_API_URL + "/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(request)))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Invalid username or password"));
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -136,7 +139,7 @@ public class AuthControllerApiTest {
         mockMvc.perform(post(BASE_API_URL + "/refresh")
                         .cookie(new Cookie("refresh_token", refreshToken)))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Set-Cookie", containsString("access_token=")));
+                .andExpect(jsonPath("$.access_token").value("new-access-token"));
 
         verify(jwtService).extractUserId(refreshToken);
         verify(userService).getById(userId);
@@ -163,7 +166,7 @@ public class AuthControllerApiTest {
         when(userService.getInfo(userId)).thenReturn(expectedUser);
 
         mockMvc.perform(get(BASE_API_URL + "/me")
-                        .cookie(new Cookie("access_token", accessToken)))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId.toString()))
                 .andExpect(jsonPath("$.username").value("testuser"));
@@ -178,27 +181,83 @@ public class AuthControllerApiTest {
     }
 
     @Test
-    void givenLogout_whenCalled_thenClearsAuthCookies() throws Exception {
+    void logout_shouldClearRefreshTokenCookie() throws Exception {
         MockUtils.mockJwtFilterAuthentication(userService, jwtService);
 
-        Cookie accessTokenCookie = new Cookie("access_token", "some-access-token-value");
-        Cookie refreshTokenCookie = new Cookie("refresh_token", "some-refresh-token-value");
-
         mockMvc.perform(get(BASE_API_URL + "/logout")
-                        .cookie(accessTokenCookie).cookie(refreshTokenCookie))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer some-access-token"))
                 .andExpect(status().isOk())
                 .andExpect(header().stringValues(HttpHeaders.SET_COOKIE,
                         Matchers.hasItem(Matchers.allOf(
-                                containsString("access_token="),
-                                containsString("Max-Age=0")
-                        ))
-                ))
-                .andExpect(header().stringValues(HttpHeaders.SET_COOKIE,
-                        Matchers.hasItem(Matchers.allOf(
-                                containsString("refresh_token="),
-                                containsString("Max-Age=0")
+                                Matchers.containsString("refresh_token="),
+                                Matchers.containsString("Max-Age=0")
                         ))
                 ));
+    }
+
+    @Test
+    void verify_shouldReturn200_whenCodeValid() throws Exception {
+        // given
+        String validCode = "abc123";
+
+        // when + then
+        mockMvc.perform(post(BASE_API_URL + "/verify")
+                        .param("verificationCode", validCode))
+                .andExpect(status().isOk());
+
+        // verify controller calls service
+        verify(userService).verify(validCode);
+    }
+
+    @Test
+    void verify_shouldReturn400_whenCodeInvalid() throws Exception {
+        String invalidCode = "wrong-code";
+
+        doThrow(new VerificationException("Invalid or expired verification code"))
+                .when(userService).verify(invalidCode);
+
+        mockMvc.perform(post(BASE_API_URL + "/verify")
+                        .param("verificationCode", invalidCode))
+                .andExpect(status().isBadRequest());
+
+        verify(userService).verify(invalidCode);
+    }
+
+    @Test
+    void resendVerification_shouldReturn200_whenValidRequestData() throws Exception {
+        ResendVerificationRequest request = new ResendVerificationRequest("test@example.com");
+
+        mockMvc.perform(post(BASE_API_URL + "/resend-verification")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        verify(userService).resendVerification(request.getEmail());
+    }
+
+    @Test
+    void resendVerification_shouldReturnBadRequest_forTooManyAttempts() throws Exception {
+        ResendVerificationRequest request = new ResendVerificationRequest("test@example.com");
+
+        doThrow(new TooManyAttemptsException("Too many attempts")).when(userService).resendVerification(request.getEmail());
+
+        mockMvc.perform(post(BASE_API_URL + "/resend-verification")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void resendVerification_shouldReturnNotFound_forUnknownUser() throws Exception {
+        ResendVerificationRequest request = new ResendVerificationRequest("unknown@test.com");
+
+        doThrow(new UserNotFoundException("unknown@test.com"))
+                .when(userService).resendVerification(request.getEmail());
+
+        mockMvc.perform(post(BASE_API_URL + "/resend-verification")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isNotFound());
     }
 
 

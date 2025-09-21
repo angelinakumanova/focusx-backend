@@ -104,7 +104,7 @@ public class UserService implements UserDetailsService {
     @Transactional
     public void resendVerification(String email) {
         User user = userRepository.findByEmailAndStatus(email, UserStatus.PENDING)
-                .orElseThrow(() -> new IllegalArgumentException("User is already verified or does not exist"));
+                .orElseThrow(() -> new UserNotFoundException("User is already verified or does not exist"));
 
         verificationService.validateResendAttempt(email);
 
