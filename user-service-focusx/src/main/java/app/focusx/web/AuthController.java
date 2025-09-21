@@ -63,7 +63,13 @@ public class AuthController {
 
     @PostMapping("/resend-verification")
     @Operation(
-            summary = "Resends "
+            summary = "Resend verification email",
+            description = "Sends a verification email again to users who have not yet verified their account.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Verification email resent successfully."),
+                    @ApiResponse(responseCode = "400", description = "Invalid email format."),
+                    @ApiResponse(responseCode = "404", description = "User not found or already verified.")
+            }
     )
     public void resendVerification(@RequestBody ResendVerificationRequest request) {
         userService.resendVerification(request.getEmail());
