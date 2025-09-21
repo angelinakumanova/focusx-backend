@@ -39,7 +39,11 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new user",
-            description = "Takes a username, email, and password to create an account.")
+            description = "Takes a username, email, and password to create an account.",
+    responses = {
+            @ApiResponse(responseCode = "200", description = "Successful registration."),
+            @ApiResponse(responseCode = "400", description = "Invalid register request.")
+    })
     public void register(@Valid @RequestBody RegisterRequest request) {
         this.userService.register(request);
     }
