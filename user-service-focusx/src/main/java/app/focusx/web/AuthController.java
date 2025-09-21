@@ -53,7 +53,7 @@ public class AuthController {
             summary = "Verify user",
             description = "Verifies a user by verification code sent on email and sets access and refresh token.",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Verification successful, tokens set."),
+                    @ApiResponse(responseCode = "200", description = "Verification successful."),
                     @ApiResponse(responseCode = "400", description = "Invalid or expired verification code.")
             }
     )
