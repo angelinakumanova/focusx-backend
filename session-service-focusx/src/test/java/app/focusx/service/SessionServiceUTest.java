@@ -11,6 +11,8 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Instant;
 import java.util.List;
@@ -32,6 +34,12 @@ public class SessionServiceUTest {
     @Mock
     private NewSessionEventProducer producer;
 
+    @Mock
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOperations;
+
     @Captor
     ArgumentCaptor<Session> sessionCaptor;
 
@@ -46,10 +54,10 @@ public class SessionServiceUTest {
 
         sessionService.add(request);
 
-        verify(sessionRepository, times(1)).save(sessionCaptor.capture());
+        verify(sessionRepository).save(sessionCaptor.capture());
         Session session = sessionCaptor.getValue();
 
-        verify(producer, times(1)).sendNewSessionAddedEvent(any(), any(Long.class), any(boolean.class));
+        verify(producer).sendNewSessionAddedEvent(any(), any(Long.class), any(boolean.class));
         assertThat(session.getMinutes()).isEqualTo(request.getMinutes());
     }
 
@@ -66,6 +74,9 @@ public class SessionServiceUTest {
                 .completedAt(Instant.now())
                 .userId(userId.toString()).build();
         List<Session> sessions = List.of(session1, session2);
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(anyString())).thenReturn(null);
 
         when(sessionRepository
                 .findByCompletedAtBetweenAndUserId(any(Instant.class), any(Instant.class), eq(userId.toString())))

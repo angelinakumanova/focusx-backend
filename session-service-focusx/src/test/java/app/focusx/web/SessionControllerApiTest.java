@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -51,7 +52,7 @@ public class SessionControllerApiTest {
         sessionCreateRequest.setUserTimezone("Europe/Berlin");
 
         mockMvc.perform(post(BASE_URL)
-                        .cookie(new Cookie("access_token", "fake-token"))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer access_token")
                         .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(sessionCreateRequest)))
@@ -68,7 +69,7 @@ public class SessionControllerApiTest {
         sessionCreateRequest.setUserTimezone("Europe/Berlin");
 
         mockMvc.perform(post(BASE_URL)
-                        .cookie(new Cookie("access_token", "fake-token"))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer access_token")
                         .with(jwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(sessionCreateRequest)))
@@ -84,7 +85,7 @@ public class SessionControllerApiTest {
         when(sessionService.getTodaysDuration(userId, timezone)).thenReturn(expectedDuration);
 
         mockMvc.perform(get("/api/sessions/" + userId + "/today")
-                        .cookie(new Cookie("access_token", "fake-token"))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer access_token")
                         .with(jwt())
                         .header("User-Timezone", timezone))
                 .andExpect(status().isOk())
