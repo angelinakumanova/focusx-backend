@@ -2,9 +2,11 @@ package app.focusx.web;
 
 import app.focusx.MockUtils;
 import app.focusx.security.JwtService;
+import app.focusx.service.IpRateLimiterService;
 import app.focusx.service.UserService;
 import app.focusx.util.CookieUtils;
 import app.focusx.web.dto.PasswordUpdateRequest;
+import app.focusx.web.dto.UsernameUpdateRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,6 +16,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,6 +40,9 @@ public class UserControllerApiTest {
     @MockitoBean
     private JwtService jwtService;
 
+    @MockitoBean
+    private IpRateLimiterService ipRateLimiterService;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -52,8 +58,12 @@ public class UserControllerApiTest {
 
         doNothing().when(userService).updateUsername(id, newUsername);
 
-        mockMvc.perform(put(BASE_API_URL + "/" + id + "/" + newUsername)
-                        .cookie(new Cookie("access_token", "fake-token")))
+        mockMvc.perform(put(BASE_API_URL + "/" + id + "/username")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer access-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(
+                                new UsernameUpdateRequest(newUsername)
+                        )))
                 .andExpect(status().isOk());
 
         verify(userService).updateUsername(id, newUsername);
@@ -69,7 +79,7 @@ public class UserControllerApiTest {
         doNothing().when(userService).updatePassword(id, request.getCurrentPassword(), request.getNewPassword());
 
         mockMvc.perform(put(BASE_API_URL + "/" + id + "/password")
-                        .cookie(new Cookie("access_token", "fake-token"))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer access-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -87,7 +97,7 @@ public class UserControllerApiTest {
             cookieUtilsMock.when(() -> CookieUtils.clearAuthCookies(any(HttpServletResponse.class))).thenAnswer(invocation -> null);
 
             mockMvc.perform(put(BASE_API_URL + "/" + id + "/deactivate")
-                            .cookie(new Cookie("access_token", "fake-token")))
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer access-token"))
                     .andExpect(status().isOk());
 
             verify(userService).deactivate(id);
@@ -105,7 +115,7 @@ public class UserControllerApiTest {
 
         mockMvc.perform(get(BASE_API_URL + "/" + id + "/streak")
                         .header("timezone", timezone)
-                        .cookie(new Cookie("access_token", "fake-token")))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer access-token"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(String.valueOf(streakValue)));
 

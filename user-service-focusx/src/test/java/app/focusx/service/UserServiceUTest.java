@@ -543,7 +543,7 @@ public class UserServiceUTest {
     void resendVerification_whenUserIsInvalidOrNonExistent_throwsException() {
         when(userRepository.findByEmailAndStatus(any(), any())).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> userService.resendVerification("email"));
+        assertThrows(UserNotFoundException.class, () -> userService.resendVerification("email"));
     }
 
 
