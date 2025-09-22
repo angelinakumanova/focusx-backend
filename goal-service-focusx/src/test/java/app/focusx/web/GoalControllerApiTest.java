@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -45,8 +46,6 @@ public class GoalControllerApiTest {
 
     @Test
     void postRequestWithUserIdToCreateGoal_returns201Status() throws Exception {
-        mockJwtFilterAuthentication();
-
         CreateGoalRequest request = new CreateGoalRequest();
         request.setTitle("Title");
         request.setType(GoalType.SESSION);
@@ -55,10 +54,11 @@ public class GoalControllerApiTest {
         request.setReward("Reward");
 
 
-        mockMvc.perform(post(BASE_URL + "/" + UUID.randomUUID())
-                .cookie(new Cookie("access_token", "fake-token")).with(jwt())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(new ObjectMapper().writeValueAsString(request)))
+        mockMvc.perform(post(BASE_URL + "/userId")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer access_token")
+                        .with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(request)))
                 .andExpect(status().isCreated());
 
         verify(goalService).create(any(), any());
@@ -87,7 +87,8 @@ public class GoalControllerApiTest {
         when(goalService.getAll(userId)).thenReturn(mockGoals);
 
         mockMvc.perform(get(BASE_URL + "/" + userId)
-                        .cookie(new Cookie("access_token", "fake-token")).with(jwt()))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer access_token")
+                        .with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.length()").value(mockGoals.size()))
@@ -105,7 +106,8 @@ public class GoalControllerApiTest {
         doNothing().when(goalService).deleteById(goalId);
 
         mockMvc.perform(delete(BASE_URL + "/" + goalId)
-                .cookie(new Cookie("access_token", "fake-token")).with(jwt()))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer access_token")
+                        .with(jwt()))
                 .andExpect(status().isOk());
 
         verify(goalService).deleteById(goalId);
