@@ -230,11 +230,11 @@ public class UserService implements UserDetailsService {
         if (lastUpdatedStreak != null) {
             ZoneId userZone = ZoneId.of(timezone);
 
-            ZonedDateTime lastUpdatedZoned = lastUpdatedStreak.atZone(ZoneOffset.UTC).withZoneSameInstant(userZone);
+            ZonedDateTime lastUpdatedZoned = lastUpdatedStreak.atZone(ZoneOffset.UTC).withZoneSameInstant(userZone).toLocalDate().atStartOfDay(userZone);
 
             ZonedDateTime startOfToday = ZonedDateTime.now(userZone).toLocalDate().atStartOfDay(userZone);
 
-            if (lastUpdatedZoned.isBefore(startOfToday.minusDays(2))) {
+            if (lastUpdatedZoned.isBefore(startOfToday.minusDays(1))) {
                 user.setStreak(0);
                 userRepository.save(user);
             }
