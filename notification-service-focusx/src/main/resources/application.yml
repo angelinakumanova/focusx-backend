@@ -31,20 +31,8 @@ spring:
       session:
         timeout:
           ms: 45000
-
-
-  mail:
-    host: smtp.sendgrid.net
-    port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-
+  sendgrid:
+    api-key: ${SENDGRID_API_KEY}
 
 server:
   port: 8083
