@@ -12,6 +12,9 @@ import app.focusx.web.dto.LoginRequest;
 import app.focusx.web.dto.RegisterRequest;
 import app.focusx.web.dto.UserResponse;
 import app.focusx.web.mapper.DtoMapper;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,8 +27,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.*;
 import java.time.temporal.ChronoUnit;
@@ -35,6 +39,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
@@ -44,6 +49,7 @@ public class UserService implements UserDetailsService {
     private final RedisTemplate<String, String> redisTemplate;
 
     private final ApplicationEventPublisher eventPublisher;
+
 
     public UserService(UserRepository userRepository, AuthenticationManager authenticationManager, VerificationService verificationService, RedisTemplate<String, String> redisTemplate, ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
@@ -88,6 +94,10 @@ public class UserService implements UserDetailsService {
         User user = this.userRepository.save(createNewUser(request));
 
         sendVerification(user);
+
+        log.info("Transaction active? {}", TransactionSynchronizationManager.isActualTransactionActive());
+        log.info("Synchronization active? {}", TransactionSynchronizationManager.isSynchronizationActive());
+        log.info("Current transaction name: {}", TransactionSynchronizationManager.getCurrentTransactionName());
     }
 
 

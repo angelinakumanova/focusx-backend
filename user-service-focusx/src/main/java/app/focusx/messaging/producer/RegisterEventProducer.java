@@ -21,7 +21,7 @@ public class RegisterEventProducer {
         this.mapper = mapper;
     }
 
-    @EventListener
+    @TransactionalEventListener
     public void sendRegisterEvent(RegisterEvent event) {
         sendEvent(event);
     }
