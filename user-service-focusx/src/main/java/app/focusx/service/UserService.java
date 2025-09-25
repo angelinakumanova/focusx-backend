@@ -89,19 +89,13 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
-    @Transactional
     public void register(RegisterRequest request) {
         User user = this.userRepository.save(createNewUser(request));
 
         sendVerification(user);
-
-        log.info("Transaction active? {}", TransactionSynchronizationManager.isActualTransactionActive());
-        log.info("Synchronization active? {}", TransactionSynchronizationManager.isSynchronizationActive());
-        log.info("Current transaction name: {}", TransactionSynchronizationManager.getCurrentTransactionName());
     }
 
 
-    @Transactional
     public void verify(String verificationCode) {
         String userId = verificationService.verify(verificationCode);
         User user = userRepository.getByIdAndStatus(userId, UserStatus.PENDING)
@@ -113,7 +107,6 @@ public class UserService implements UserDetailsService {
         eventPublisher.publishEvent(new VerifiedUserEvent(user.getUsername(), user.getEmail()));
     }
 
-    @Transactional
     public void resendVerification(String email) {
         User user = userRepository.findByEmailAndStatus(email, UserStatus.PENDING)
                 .orElseThrow(() -> new UserNotFoundException("User is already verified or does not exist"));
