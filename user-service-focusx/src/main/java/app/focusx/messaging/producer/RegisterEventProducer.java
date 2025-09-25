@@ -3,6 +3,7 @@ package app.focusx.messaging.producer;
 import app.focusx.messaging.producer.event.RegisterEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -20,7 +21,7 @@ public class RegisterEventProducer {
         this.mapper = mapper;
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     public void sendRegisterEvent(RegisterEvent event) {
         sendEvent(event);
     }

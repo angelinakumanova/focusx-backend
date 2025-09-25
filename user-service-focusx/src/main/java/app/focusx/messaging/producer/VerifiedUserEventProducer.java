@@ -3,10 +3,9 @@ package app.focusx.messaging.producer;
 import app.focusx.messaging.producer.event.VerifiedUserEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @Slf4j
@@ -20,7 +19,7 @@ public class VerifiedUserEventProducer {
         this.mapper = mapper;
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     public void sendVerifiedUserEvent(VerifiedUserEvent event) {
         sendEvent(event);
     }

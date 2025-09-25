@@ -24,6 +24,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
@@ -82,6 +83,7 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
+    @Transactional
     public void register(RegisterRequest request) {
         User user = this.userRepository.save(createNewUser(request));
 
@@ -210,6 +212,7 @@ public class UserService implements UserDetailsService {
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
+
 
     private void sendVerification(User user) {
         String verificationCode = verificationService.generateVerificationCode(user.getId());
