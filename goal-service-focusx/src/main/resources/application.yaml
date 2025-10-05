@@ -6,7 +6,7 @@ spring:
       uri: ${MONGO_URI}
       database: ${MONGO_DB_NAME}
   kafka:
-    bootstrap-servers: pkc-75m1o.europe-west3.gcp.confluent.cloud:9092
+    bootstrap-servers: ${KAFKA_SERVER}
     properties:
       sasl:
         mechanism: PLAIN
@@ -31,7 +31,7 @@ server:
   port: 8081
 
 client:
-  id: ccloud-springboot-client-96a8c99e-2a1c-4b8c-90d2-d416052cb768
+  id: ${KAFKA_CLIENT_ID}
 
 springdoc:
   api-docs:

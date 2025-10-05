@@ -15,7 +15,7 @@ spring:
     type: redis
 
   kafka:
-    bootstrap-servers: pkc-75m1o.europe-west3.gcp.confluent.cloud:9092
+    bootstrap-servers: ${KAFKA_SERVER}
     properties:
       group-id: session-service
       sasl:
@@ -35,7 +35,7 @@ spring:
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
 
 client:
-  id: ccloud-springboot-client-96a8c99e-2a1c-4b8c-90d2-d416052cb768
+  id: ${KAFKA_CLIENT_ID}
 
 server:
   port: 8082

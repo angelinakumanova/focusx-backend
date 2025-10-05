@@ -9,8 +9,9 @@ spring:
       host: ${REDIS_ENDPOINT}
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
+
   kafka:
-    bootstrap-servers: pkc-75m1o.europe-west3.gcp.confluent.cloud:9092
+    bootstrap-servers: ${KAFKA_SERVER}
     properties:
       group-id: user-service
       sasl:
@@ -28,13 +29,12 @@ spring:
   cache:
     type: redis
 
-
 jwt:
   private-key: ${JWT_PRIVATE_KEY}
   public-key: ${JWT_PUBLIC_KEY}
 
 client:
-  id: ccloud-springboot-client-96a8c99e-2a1c-4b8c-90d2-d416052cb768
+  id: ${KAFKA_CLIENT_ID}
 
 springdoc:
   api-docs:
