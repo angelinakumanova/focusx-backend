@@ -1,0 +1,12 @@
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 0
+    mongodb:
+      database: testdb
+      uri: mongodb://localhost:27017/testdb
+
+
+SENDGRID_API_KEY: dummy-key
+KAFKA_SERVER: localhost:9092
