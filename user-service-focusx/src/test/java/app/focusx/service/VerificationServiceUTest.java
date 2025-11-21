@@ -121,6 +121,6 @@ public class VerificationServiceUTest {
                 .set(anyString(), anyString(), anyLong(), any());
 
         assertThrows(VerificationException.class,
-                () -> verificationService.generateVerificationCode(USER_ID));
+        () -> verificationService.generateVerificationCode(USER_ID));
     }
 }
