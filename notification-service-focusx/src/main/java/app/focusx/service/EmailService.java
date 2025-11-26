@@ -7,15 +7,9 @@ import app.focusx.model.Notification;
 import app.focusx.model.NotificationStatus;
 import app.focusx.model.NotificationType;
 import app.focusx.repository.NotificationRepository;
-import com.sendgrid.Method;
-import com.sendgrid.Request;
-import com.sendgrid.Response;
-import com.sendgrid.SendGrid;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.Content;
-import com.sendgrid.helpers.mail.objects.Email;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -27,15 +21,14 @@ import java.util.UUID;
 @Service
 @Slf4j
 public class EmailService {
-    @Value("${SENDGRID_API_KEY}")
-    private String SENDGRID_API_KEY;
-
     private final NotificationRepository notificationRepository;
     private final SpringTemplateEngine templateEngine;
+    private final JavaMailSender mailSender;
 
-    public EmailService(NotificationRepository notificationRepository, SpringTemplateEngine templateEngine) {
+    public EmailService(NotificationRepository notificationRepository, SpringTemplateEngine templateEngine, JavaMailSender mailSender) {
         this.notificationRepository = notificationRepository;
         this.templateEngine = templateEngine;
+        this.mailSender = mailSender;
     }
 
     public void sendVerificationCodeEmail(RegisterEvent event) {
@@ -70,22 +63,18 @@ public class EmailService {
                 .createdOn(LocalDateTime.now())
                 .build();
 
-        Email from = new Email("foocusx@outlook.com");
-        Email to = new Email(toEmail);
-        Content content = new Content("text/html", body);
-        Mail mail = new Mail(from, subject, to, content);
 
-        SendGrid sg = new SendGrid(SENDGRID_API_KEY);
-
-        Request request = new Request();
         try {
-            request.setMethod(Method.POST);
-            request.setEndpoint("mail/send");
-            request.setBody(mail.build());
-            sg.api(request);
+            mailSender.send(mimeMessage -> {
+                MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true);
+                messageHelper.setTo(toEmail);
+                messageHelper.setSubject(subject);
+                messageHelper.setText(body, true);
+            });
 
             notification.setStatus(NotificationStatus.DELIVERED);
-        } catch (IOException ex) {
+            log.info("Mail has been successfully sent to " + toEmail);
+        } catch (Exception ex) {
             notification.setStatus(NotificationStatus.FAILED);
             log.warn("Failed to send mail to user with email: %s due to %s".formatted(toEmail, ex.getMessage()));
         }
