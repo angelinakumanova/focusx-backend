@@ -7,9 +7,8 @@ spring:
       uri: ${MONGO_URI}
       database: ${MONGO_DB_NAME}
     redis:
-      host: ${REDIS_ENDPOINT}
+      host: ${REDIS_HOST}
       port: ${REDIS_PORT}
-      password: ${REDIS_PASSWORD}
 
   cache:
     type: redis
@@ -17,20 +16,11 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_SERVER}
-    properties:
-      group-id: notification-service
-      sasl:
-        mechanism: PLAIN
-        jaas:
-          config: >
-              org.apache.kafka.common.security.plain.PlainLoginModule required
-              username='${KAFKA_API_KEY}'
-              password='${KAFKA_API_SECRET}';
-      security:
-        protocol: SASL_SSL
-      session:
-        timeout:
-          ms: 45000
+    security:
+      protocol: PLAINTEXT
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   sendgrid:
     api-key: ${SENDGRID_API_KEY}
 
@@ -42,6 +32,3 @@ springdoc:
     enabled: ${SWAGGER_ENABLED:true}
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:true}
-
-client:
-  id: ${KAFKA_CLIENT_ID}

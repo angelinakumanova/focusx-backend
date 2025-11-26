@@ -7,19 +7,11 @@ spring:
       database: ${MONGO_DB_NAME}
   kafka:
     bootstrap-servers: ${KAFKA_SERVER}
-    properties:
-      sasl:
-        mechanism: PLAIN
-        jaas:
-          config: >
-            org.apache.kafka.common.security.plain.PlainLoginModule required
-            username='${KAFKA_API_KEY}'
-            password='${KAFKA_API_SECRET}';
-      security:
-        protocol: SASL_SSL
-      session:
-        timeout:
-          ms: 45000
+    security:
+      protocol: PLAINTEXT
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 
   autoconfigure:
@@ -29,9 +21,6 @@ jwt:
 
 server:
   port: 8081
-
-client:
-  id: ${KAFKA_CLIENT_ID}
 
 springdoc:
   api-docs:

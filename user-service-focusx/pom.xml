@@ -8,9 +8,9 @@
 		<version>3.4.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
+
 	<groupId>app</groupId>
-	<artifactId>focusx</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<artifactId>user-service-focusx</artifactId>
 	<name>user-service-focusx</name>
 	<description>user-service-focusx</description>
 	<url/>
